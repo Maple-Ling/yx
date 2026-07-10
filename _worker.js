@@ -1372,13 +1372,17 @@ function generateHomePage(scuValue) {
             const container = document.getElementById('serverContainer');
             const row = document.createElement('div');
             row.className = 'server-row';
-            row.style = 'display: flex; gap: 6px; margin-bottom: 12px; align-items: center;';
-            row.innerHTML = `
-                <input type="text" class="server-input s-domain" style="flex: 1; min-width: 0; padding: 10px; border-radius: 8px; border: 1px solid rgba(142,142,147,0.3); background: rgba(142,142,147,0.12); color: inherit;" placeholder="域名/主机名">
-                <input type="text" class="server-input s-uuid" style="flex: 1; min-width: 0; padding: 10px; border-radius: 8px; border: 1px solid rgba(142,142,147,0.3); background: rgba(142,142,147,0.12); color: inherit;" placeholder="UUID/密码">
-                <input type="text" class="server-input s-prefix" style="width: 80px; padding: 10px; border-radius: 8px; border: 1px solid rgba(142,142,147,0.3); background: rgba(142,142,147,0.12); color: inherit;" placeholder="前缀" value="Node">
-                <button type="button" onclick="this.parentElement.remove()" style="width: 36px; height: 36px; background: #FF3B30; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; flex-shrink: 0; box-shadow: none; padding: 0;">-</button>
-            `;
+            row.style.display = 'flex';
+            row.style.gap = '6px';
+            row.style.marginBottom = '12px';
+            row.style.alignItems = 'center';
+
+            row.innerHTML = '<input type="text" class="server-input s-domain" style="flex: 1; min-width: 0; padding: 10px; border-radius: 8px; border: 1px solid rgba(142,142,147,0.3); background: rgba(142,142,147,0.12); color: inherit;" placeholder="域名/主机名">' +
+            '<input type="text" class="server-input s-uuid" style="flex: 1; min-width: 0; padding: 10px; border-radius: 8px; border: 1px solid rgba(142,142,147,0.3); background: rgba(142,142,147,0.12); color: inherit;" placeholder="UUID/密码">' +
+            '<input type="text" class="server-input s-prefix" style="width: 80px; padding: 10px; border-radius: 8px; border: 1px solid rgba(142,142,147,0.3); background: rgba(142,142,147,0.12); color: inherit;" placeholder="前缀" value="Node">' +
+            '<button type="button" onclick="this.parentElement.remove()" style="width: 36px; height: 36px; background: #FF3B30; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; flex-shrink: 0; box-shadow: none; padding: 0;">-</button>';
+
+            container.appendChild(row);
         }
         let switches = {
             switchDomain: true,

@@ -1197,17 +1197,42 @@ function generateHomePage(scuValue) {
             <p>智能优选 • 一键生成</p>
         </div>
         
-        <div class="card">
-            <div class="form-group">
-                <label>域名</label>
-                <input type="text" id="domain" placeholder="请输入您的域名">
+        <!-- 动态服务器配置组容器 -->
+        <div id="server-groups-container" class="space-y-3">
+          <!-- 第一组（默认存在，不可删除） -->
+          <div class="server-group grid grid-cols-1 md:grid-cols-4 gap-2 p-3 bg-gray-50 rounded">
+            <div>
+              <label class="block text-sm font-medium mb-1">域名</label>
+              <input type="text" name="domains[]" class="w-full px-2 py-1 border rounded" placeholder="example.com">
             </div>
-            
-            <div class="form-group">
-                <label>UUID/Password</label>
-                <input type="text" id="uuid" placeholder="请输入UUID或Password">
+            <div>
+              <label class="block text-sm font-medium mb-1">UUID/Password</label>
+              <input type="text" name="uuids[]" class="w-full px-2 py-1 border rounded" placeholder="UUID或Password">
             </div>
-            
+            <div>
+              <label class="block text-sm font-medium mb-1">WebSocket路径（可选）</label>
+              <input type="text" name="paths[]" class="w-full px-2 py-1 border rounded" placeholder="留空则使用默认路径 /" value="/">
+            </div>
+            <div class="flex">
+              <div class="flex-1 mr-2">
+                <label class="block text-sm font-medium mb-1">节点前缀（可选）</label>
+                <input type="text" name="prefixes[]" class="w-full px-2 py-1 border rounded" placeholder="例如: JP, US" style="text-transform: uppercase;">
+              </div>
+              <!-- 删除按钮放在前缀框右侧，与输入框对齐 -->
+              <button type="button" class="delete-group mt-5 h-8 w-8 flex items-center justify-center bg-red-100 text-red-600 rounded hover:bg-red-200 transition">
+                −
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 永远固定在底部的「添加」按钮 -->
+        <div class="form-group" style="margin-top: 24px;">
+          <button type="button" id="add-group" class="w-full bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition flex items-center justify-center">
+            <span class="mr-2">+</span> 添加新服务器配置
+          </button>
+        </div>
+
             <div class="form-group">
                 <label>WebSocket路径（可选）</label>
                 <input type="text" id="customPath" placeholder="留空则使用默认路径 /" value="/">
@@ -1363,7 +1388,60 @@ function generateHomePage(scuValue) {
             switchTLS: false,
             switchECH: false
         };
-        
+        // --- 动态服务器配置组逻辑开始 ---
+        const container = document.getElementById('server-groups-container');
+        const addButton = document.getElementById('add-group');
+
+        // 创建新配置行的函数
+        const createServerGroup = () => {
+          const group = document.createElement('div');
+          group.className = 'server-group grid grid-cols-1 md:grid-cols-4 gap-2 p-3 bg-gray-50 rounded';
+
+          group.innerHTML = `
+            <div>
+              <label class="block text-sm font-medium mb-1">域名</label>
+              <input type="text" name="domains[]" class="w-full px-2 py-1 border rounded" placeholder="example.com">
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-1">UUID/Password</label>
+              <input type="text" name="uuids[]" class="w-full px-2 py-1 border rounded" placeholder="UUID或Password">
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-1">WebSocket路径（可选）</label>
+              <input type="text" name="paths[]" class="w-full px-2 py-1 border rounded" placeholder="留空则使用默认路径 /" value="/">
+            </div>
+            <div class="flex">
+              <div class="flex-1 mr-2">
+                <label class="block text-sm font-medium mb-1">节点前缀（可选）</label>
+                <input type="text" name="prefixes[]" class="w-full px-2 py-1 border rounded" placeholder="例如: JP, US" style="text-transform: uppercase;">
+              </div>
+              <button type="button" class="delete-group mt-5 h-8 w-8 flex items-center justify-center bg-red-100 text-red-600 rounded hover:bg-red-200 transition">
+                −
+               </button>
+            </div>
+          `;
+          return group;
+        };
+
+        // 添加新配置行
+        addButton.addEventListener('click', () => {
+          container.appendChild(createServerGroup());
+        });
+
+        // 事件委托：处理所有删除按钮
+        container.addEventListener('click', (e) => {
+          if (e.target.classList.contains('delete-group')) {
+            const group = e.target.closest('.server-group');
+            const allGroups = document.querySelectorAll('.server-group');
+
+            // 至少保留1组
+            if (allGroups.length > 1) {
+              group.remove();
+            }
+           }
+        });
+        // --- 动态服务器配置组逻辑结束 ---
+
         function toggleSwitch(id) {
             const switchEl = document.getElementById(id);
             switches[id] = !switches[id];
@@ -1429,16 +1507,32 @@ function generateHomePage(scuValue) {
         }
         
         function generateClientLink(clientType, clientName) {
-            const domain = document.getElementById('domain').value.trim();
-            const uuid = document.getElementById('uuid').value.trim();
-            const customPath = document.getElementById('customPath').value.trim() || '/';
-            const nodePrefix = document.getElementById('nodePrefix').value.trim();
-            
-            if (!domain || !uuid) {
-                alert('请先填写域名和UUID/Password');
-                return;
+          // 获取所有配置组
+          const groups = [];
+          const groupElements = document.querySelectorAll('.server-group');
+  
+          groupElements.forEach(group => {
+            const domain = group.querySelector('input[name="domains[]"]').value.trim();
+            const uuid = group.querySelector('input[name="uuids[]"]').value.trim();
+            // 如果任意一组缺少域名或UUID，则视为无效组，不加入列表
+            if (domain && uuid) {
+              const path = group.querySelector('input[name="paths[]"]').value.trim() || '/';
+              const prefix = group.querySelector('input[name="prefixes[]"]').value.trim();
+              groups.push({ domain, uuid, path, prefix });
             }
-            
+          });
+
+          // 检查是否至少有一组有效配置
+          if (groups.length === 0) {
+            alert('请至少填写一组有效的域名和UUID/Password');
+            return;
+          }
+  
+          // 使用第一组的配置作为全局的 customPath 和 nodePrefix（如果它们为空）
+          // 这样可以保持与旧逻辑的兼容性，如果用户只填了一组，行为不变
+          const customPath = groups[0].path;
+          const nodePrefix = groups[0].prefix;
+
             // 检查至少选择一个协议
             if (!switches.switchVL && !switches.switchTJ && !switches.switchVM) {
                 alert('请至少选择一个协议（VLESS、Trojan或VMess）');
@@ -1455,8 +1549,16 @@ function generateHomePage(scuValue) {
             
             const currentUrl = new URL(window.location.href);
             const baseUrl = currentUrl.origin;
-            let subscriptionUrl = \`\${baseUrl}/\${uuid}/sub?domain=\${encodeURIComponent(domain)}&epd=\${switches.switchDomain ? 'yes' : 'no'}&epi=\${switches.switchIP ? 'yes' : 'no'}&egi=\${switches.switchGitHub ? 'yes' : 'no'}\`;
-            
+            // 将所有配置组的参数都添加到链接中
+            let subscriptionUrl = `${baseUrl}/multi/sub?epd=${switches.switchDomain ? 'yes' : 'no'}&epi=${switches.switchIP ? 'yes' : 'no'}&egi=${switches.switchGitHub ? 'yes' : 'no'}`;
+
+            groups.forEach((group, index) => {
+              subscriptionUrl += `&domains[]=${encodeURIComponent(group.domain)}`;
+              subscriptionUrl += `&uuids[]=${encodeURIComponent(group.uuid)}`;
+              subscriptionUrl += `&paths[]=${encodeURIComponent(group.path)}`;
+              subscriptionUrl += `&prefixes[]=${encodeURIComponent(group.prefix)}`;
+            });
+
             // 添加GitHub优选URL
             if (githubUrl) {
                 subscriptionUrl += \`&piu=\${encodeURIComponent(githubUrl)}\`;
@@ -1648,6 +1750,8 @@ export default {
         
         // 订阅请求格式: /{UUID或Password}/sub?domain=xxx&epd=yes&epi=yes&egi=yes
         const pathMatch = path.match(/^\/([^\/]+)\/sub$/);
+        const multiPathMatch = path.match(/^\/multi\/sub$/); // 新增：匹配多配置组路径
+
         if (pathMatch) {
             const uuid = pathMatch[1];
             
@@ -1690,7 +1794,95 @@ export default {
 
             return await handleSubscriptionRequest(request, uuid, domain, piu, ipv4Enabled, ipv6Enabled, ispMobile, ispUnicom, ispTelecom, evEnabled, etEnabled, vmEnabled, disableNonTLS, customPath, echConfig);
         }
-        
+
+        // 新增：处理多配置组的订阅请求
+        else if (multiPathMatch) {
+          // 从URL参数中获取所有配置组
+          const domains = url.searchParams.getAll('domains[]');
+          const uuids = url.searchParams.getAll('uuids[]');
+          const paths = url.searchParams.getAll('paths[]');
+          const prefixes = url.searchParams.getAll('prefixes[]');
+
+          // 检查是否有配置
+          if (domains.length === 0 || uuids.length === 0) {
+              return new Response('缺少域名或UUID参数', { status: 400 });
+  }
+
+          // 从URL参数获取其他配置
+          epd = url.searchParams.get('epd') !== 'no';
+          epi = url.searchParams.get('epi') !== 'no';
+          egi = url.searchParams.get('egi') !== 'no';
+          const piu = url.searchParams.get('piu') || defaultIPURL;
+          const evEnabled = url.searchParams.get('ev') === 'yes' || (url.searchParams.get('ev') === null && ev);
+          const etEnabled = url.searchParams.get('et') === 'yes';
+          const vmEnabled = url.searchParams.get('mess') === 'yes';
+          const ipv4Enabled = url.searchParams.get('ipv4') !== 'no';
+          const ipv6Enabled = url.searchParams.get('ipv6') !== 'no';
+          const ispMobile = url.searchParams.get('ispMobile') !== 'no';
+          const ispUnicom = url.searchParams.get('ispUnicom') !== 'no';
+          const ispTelecom = url.searchParams.get('ispTelecom') !== 'no';
+          let disableNonTLS = url.searchParams.get('dkby') === 'yes';
+          const echParam = url.searchParams.get('ech');
+          const echEnabled = echParam === 'yes' || (echParam === null && enableECH);
+          if (echEnabled) disableNonTLS = true;
+          const customDNSParam = url.searchParams.get('customDNS') || customDNS;
+          const customECHDomainParam = url.searchParams.get('customECHDomain') || customECHDomain;
+          const echConfig = echEnabled ? `${customECHDomainParam}+${customDNSParam}` : null;
+
+          // 处理多组配置并生成所有链接
+          const allLinks = [];
+          for (let i = 0; i < domains.length; i++) {
+            const domain = domains[i];
+            const uuid = uuids[i];
+            const customPath = paths[i] || '/';
+            const nodePrefix = prefixes[i] || '';
+    
+            // 为每一组配置创建一个虚拟的请求对象并调用处理函数
+            // 这里需要稍微变通一下，因为 handleSubscriptionRequest 是为单组设计的
+            // 我们可以复用它，但需要为每组生成链接
+            const tempUrl = new URL(request.url);
+    tempUrl.searchParams.set('domain', domain);
+            // 临时修改 url 对象，让 handleSubscriptionRequest 能读到当前组的 uuid
+            // 这是一个技巧，因为原函数从 path 中解析 uuid
+            const tempRequest = new Request(request);
+            // 我们无法直接修改 tempRequest.url，所以最好的办法是直接调用内部的生成逻辑
+            // 但为了最小化改动，我们模拟一个单组请求
+    
+            // 创建一个临时的 Request 对象，其 URL 包含了当前组的参数
+            const singleGroupUrl = new URL(`${url.origin}/${uuid}/sub`);
+            // 复制所有其他参数
+            for (const [key, value] of url.searchParams) {
+                if (!key.startsWith('domains') && !key.startsWith('uuids') && !key.startsWith('paths') && !key.startsWith('prefixes')) {
+                    singleGroupUrl.searchParams.append(key, value);
+                }
+            }
+            // 添加当前组的特定参数
+            singleGroupUrl.searchParams.set('domain', domain);
+            singleGroupUrl.searchParams.set('path', customPath);
+            singleGroupUrl.searchParams.set('prefix', nodePrefix);
+
+            const singleGroupRequest = new Request(singleGroupUrl.toString(), request);
+    
+            // 调用处理函数并获取结果
+            const response = await handleSubscriptionRequest(singleGroupRequest, uuid, domain, piu, ipv4Enabled, ipv6Enabled, ispMobile, ispUnicom, ispTelecom, evEnabled, etEnabled, vmEnabled, disableNonTLS, customPath, echConfig);
+            const text = await response.text();
+    
+            // 解码 base64 并添加到总列表
+            if (response.headers.get('Content-Type').includes('base64')) {
+                allLinks.push(...atob(text).split('\n').filter(l => l));
+            }
+          }
+  
+           // 返回所有链接
+          const finalContent = btoa(allLinks.join('\n'));
+          return new Response(finalContent, {
+              headers: {
+                  'Content-Type': 'text/plain; charset=utf-8',
+                  'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
+              },
+          });
+        }
+
         return new Response('Not Found', { status: 404 });
     }
 };

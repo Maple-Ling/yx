@@ -1519,11 +1519,11 @@ function generateHomePage(scuValue) {
             if (switches.switchECH) {
                 subscriptionUrl += '&ech=yes';
                 const dnsVal = document.getElementById('customDNS')?.value.trim();
-                if (dnsVal) subscriptionUrl += `&customDNS=${encodeURIComponent(dnsVal)}`;
+                if (dnsVal) subscriptionUrl += '&customDNS=' + encodeURIComponent(dnsVal);
                 const domainVal = document.getElementById('customECHDomain')?.value.trim();
-                if (domainVal) subscriptionUrl += `&customECHDomain=${encodeURIComponent(domainVal)}`;
+                if (domainVal) subscriptionUrl += '&customECHDomain=' + encodeURIComponent(domainVal);
             }
-            if (customPath && customPath !== '/') subscriptionUrl += `&path=${encodeURIComponent(customPath)}`;
+            if (customPath && customPath !== '/') subscriptionUrl += '&path=' + encodeURIComponent(customPath);
             
             let finalUrl = subscriptionUrl;
             let schemeUrl = '';

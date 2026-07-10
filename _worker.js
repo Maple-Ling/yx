@@ -767,43 +767,449 @@ function generateHomePage(scuValue) {
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>服务器优选工具</title>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        body { font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Helvetica Neue', Arial, sans-serif; background: linear-gradient(180deg, #f5f5f7 0%, #ffffff 50%, #fafafa 100%); color: #1d1d1f; min-height: 100vh; padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); overflow-x: hidden; }
-        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-        .header { text-align: center; padding: 48px 20px 32px; }
-        .header h1 { font-size: 40px; font-weight: 700; letter-spacing: -0.3px; color: #1d1d1f; margin-bottom: 8px; line-height: 1.1; }
-        .header p { font-size: 17px; color: #86868b; font-weight: 400; line-height: 1.5; }
-        .card { background: rgba(255, 255, 255, 0.75); backdrop-filter: blur(30px) saturate(200%); -webkit-backdrop-filter: blur(30px) saturate(200%); border-radius: 24px; padding: 28px; margin-bottom: 20px; box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06), 0 1px 3px rgba(0, 0, 0, 0.05); border: 0.5px solid rgba(0, 0, 0, 0.06); will-change: transform; }
-        .form-group { margin-bottom: 24px; }
-        .form-group:last-child { margin-bottom: 0; }
-        .form-group label { display: block; font-size: 13px; font-weight: 600; color: #86868b; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
-        .form-group input, .form-group textarea { width: 100%; padding: 14px 16px; font-size: 17px; font-weight: 400; color: #1d1d1f; background: rgba(142, 142, 147, 0.12); border: 2px solid transparent; border-radius: 12px; outline: none; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); -webkit-appearance: none; }
-        .form-group input:focus, .form-group textarea:focus { background: rgba(142, 142, 147, 0.16); border-color: #007AFF; transform: scale(1.005); }
-        .form-group input::placeholder, .form-group textarea::placeholder { color: #86868b; }
-        .list-item { display: flex; align-items: center; justify-content: space-between; padding: 16px 0; min-height: 52px; cursor: pointer; border-bottom: 0.5px solid rgba(0, 0, 0, 0.08); }
-        .list-item:last-child { border-bottom: none; }
-        .list-item-label { font-size: 17px; font-weight: 400; color: #1d1d1f; flex: 1; }
-        .switch { position: relative; display: inline-block; width: 51px; height: 31px; }
-        .switch input { opacity: 0; width: 0; height: 0; }
-        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(120, 120, 128, 0.16); transition: .2s cubic-bezier(0.4, 0, 0.2, 1); border-radius: 31px; }
-        .slider:before { position: absolute; content: ""; height: 27px; width: 27px; left: 2px; bottom: 2px; background-color: white; transition: .2s cubic-bezier(0.4, 0, 0.2, 1); border-radius: 50%; box-shadow: 0 3px 8px rgba(0,0,0,0.15), 0 1px 1px rgba(0,0,0,0.1); }
-        input:checked + .slider { background-color: #34C759; }
-        input:checked + .slider:before { transform: translateX(20px); }
-        .btn-group { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 8px; }
-        button { background: #007AFF; color: white; border: none; padding: 14px 20px; font-size: 17px; font-weight: 600; border-radius: 14px; cursor: pointer; transition: all 0.2s cubic-bezier(0.4, 0, 0.1, 1); display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 12px rgba(0,122,255,0.2); }
-        button:active { transform: scale(0.96); background: #0066CC; opacity: 0.9; }
-        .btn-secondary { background: rgba(142, 142, 147, 0.15); color: #007AFF; box-shadow: none; }
-        .btn-secondary:active { background: rgba(142, 142, 147, 0.25); color: #0066CC; }
-        #clientSubscriptionUrl { margin-top: 20px; padding: 16px; background: rgba(142, 142, 147, 0.1); border-radius: 12px; font-family: monospace; font-size: 13px; word-break: break-all; border: 0.5px solid rgba(0,0,0,0.05); color: #1d1d1f; display: none; max-height: 120px; overflow-y: auto; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(180deg, #f5f5f7 0%, #ffffff 50%, #fafafa 100%);
+            color: #1d1d1f;
+            min-height: 100vh;
+            padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+            overflow-x: hidden;
+        }
+        
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .header {
+            text-align: center;
+            padding: 48px 20px 32px;
+        }
+        
+        .header h1 {
+            font-size: 40px;
+            font-weight: 700;
+            letter-spacing: -0.3px;
+            color: #1d1d1f;
+            margin-bottom: 8px;
+            line-height: 1.1;
+        }
+        
+        .header p {
+            font-size: 17px;
+            color: #86868b;
+            font-weight: 400;
+            line-height: 1.5;
+        }
+        
+        .card {
+            background: rgba(255, 255, 255, 0.75);
+            backdrop-filter: blur(30px) saturate(200%);
+            -webkit-backdrop-filter: blur(30px) saturate(200%);
+            border-radius: 24px;
+            padding: 28px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06), 0 1px 3px rgba(0, 0, 0, 0.05);
+            border: 0.5px solid rgba(0, 0, 0, 0.06);
+            will-change: transform;
+        }
+        
+        .form-group {
+            margin-bottom: 24px;
+        }
+        
+        .form-group:last-child {
+            margin-bottom: 0;
+        }
+        
+        .form-group label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: #86868b;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 14px 16px;
+            font-size: 17px;
+            font-weight: 400;
+            color: #1d1d1f;
+            background: rgba(142, 142, 147, 0.12);
+            border: 2px solid transparent;
+            border-radius: 12px;
+            outline: none;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            -webkit-appearance: none;
+        }
+        
+        .form-group input:focus,
+        .form-group textarea:focus {
+            background: rgba(142, 142, 147, 0.16);
+            border-color: #007AFF;
+            transform: scale(1.005);
+        }
+        
+        .form-group input::placeholder,
+        .form-group textarea::placeholder {
+            color: #86868b;
+        }
+        
+        .form-group small {
+            display: block;
+            margin-top: 8px;
+            color: #86868b;
+            font-size: 13px;
+            line-height: 1.4;
+        }
+        
+        .list-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 0;
+            min-height: 52px;
+            cursor: pointer;
+            border-bottom: 0.5px solid rgba(0, 0, 0, 0.08);
+            transition: background-color 0.15s ease;
+        }
+        
+        .list-item:last-child {
+            border-bottom: none;
+        }
+        
+        .list-item:active {
+            background-color: rgba(142, 142, 147, 0.08);
+            margin: 0 -28px;
+            padding-left: 28px;
+            padding-right: 28px;
+        }
+        
+        .list-item-label {
+            font-size: 17px;
+            font-weight: 400;
+            color: #1d1d1f;
+            flex: 1;
+        }
+        
+        .list-item-description {
+            font-size: 13px;
+            color: #86868b;
+            margin-top: 4px;
+            line-height: 1.4;
+        }
+        
+        .switch {
+            position: relative;
+            width: 51px;
+            height: 31px;
+            background: rgba(142, 142, 147, 0.3);
+            border-radius: 16px;
+            transition: background 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+        
+        .switch.active {
+            background: #34C759;
+        }
+        
+        .switch::after {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 27px;
+            height: 27px;
+            background: #ffffff;
+            border-radius: 50%;
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15), 0 1px 2px rgba(0, 0, 0, 0.1);
+        }
+        
+        .switch.active::after {
+            transform: translateX(20px);
+        }
+        
+        .btn {
+            width: 100%;
+            padding: 16px;
+            font-size: 17px;
+            font-weight: 600;
+            color: #ffffff;
+            background: #007AFF;
+            border: none;
+            border-radius: 14px;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            margin-top: 8px;
+            -webkit-appearance: none;
+            box-shadow: 0 4px 12px rgba(0, 122, 255, 0.25);
+            will-change: transform;
+        }
+        
+        .btn:hover {
+            background: #0051D5;
+            box-shadow: 0 6px 16px rgba(0, 122, 255, 0.3);
+        }
+        
+        .btn:active {
+            transform: scale(0.97);
+            box-shadow: 0 2px 8px rgba(0, 122, 255, 0.2);
+        }
+        
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .btn-secondary {
+            background: rgba(142, 142, 147, 0.12);
+            color: #007AFF;
+            box-shadow: none;
+        }
+        
+        .btn-secondary:hover {
+            background: rgba(142, 142, 147, 0.16);
+        }
+        
+        .btn-secondary:active {
+            background: rgba(142, 142, 147, 0.2);
+        }
+        
+        .result {
+            margin-top: 20px;
+            padding: 16px;
+            background: rgba(142, 142, 147, 0.12);
+            border-radius: 12px;
+            font-size: 15px;
+            color: #1d1d1f;
+            word-break: break-all;
+            display: none;
+            line-height: 1.5;
+        }
+        
+        .result.show {
+            display: block;
+        }
+        
+        .result-card {
+            padding: 16px;
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 12px;
+            margin-bottom: 12px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+            border: 0.5px solid rgba(0, 0, 0, 0.06);
+        }
+        
+        .result-url {
+            margin-top: 12px;
+            padding: 12px;
+            background: rgba(0, 122, 255, 0.1);
+            border-radius: 10px;
+            font-size: 13px;
+            color: #007aff;
+            word-break: break-all;
+            line-height: 1.5;
+        }
+        
+        .copy-btn {
+            margin-top: 8px;
+            padding: 10px 16px;
+            font-size: 15px;
+            background: rgba(0, 122, 255, 0.1);
+            color: #007aff;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .copy-btn:active {
+            background: rgba(0, 122, 255, 0.2);
+            transform: scale(0.98);
+        }
+        
+        .client-btn {
+            padding: 12px 16px;
+            font-size: 14px;
+            font-weight: 500;
+            color: #007AFF;
+            background: rgba(0, 122, 255, 0.1);
+            border: 1px solid rgba(0, 122, 255, 0.2);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            -webkit-appearance: none;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            min-width: 0;
+        }
+        
+        .client-btn:active {
+            transform: scale(0.97);
+            background: rgba(0, 122, 255, 0.2);
+            border-color: rgba(0, 122, 255, 0.3);
+        }
+        
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            font-size: 17px;
+            font-weight: 400;
+            user-select: none;
+            -webkit-user-select: none;
+            position: relative;
+            z-index: 1;
+            padding: 8px 0;
+        }
+        
+        .checkbox-label input[type="checkbox"] {
+            margin-right: 12px;
+            width: 22px;
+            height: 22px;
+            cursor: pointer;
+            flex-shrink: 0;
+            position: relative;
+            z-index: 2;
+            -webkit-appearance: checkbox;
+            appearance: checkbox;
+        }
+        
+        .checkbox-label span {
+            cursor: pointer;
+            position: relative;
+            z-index: 1;
+        }
+        
+        @media (max-width: 480px) {
+            .client-btn {
+                font-size: 12px;
+                padding: 10px 12px;
+            }
+            
+            .header h1 {
+                font-size: 34px;
+            }
+        }
+        
+        .footer {
+            text-align: center;
+            padding: 32px 20px;
+            color: #86868b;
+            font-size: 13px;
+        }
+        
+        .footer a {
+            color: #007AFF;
+            text-decoration: none;
+            font-weight: 500;
+            transition: opacity 0.2s ease;
+        }
+        
+        .footer a:active {
+            opacity: 0.6;
+        }
+        
+        @media (prefers-color-scheme: dark) {
+            body {
+                background: linear-gradient(180deg, #000000 0%, #1c1c1e 50%, #2c2c2e 100%);
+                color: #f5f5f7;
+            }
+            
+            .card {
+                background: rgba(28, 28, 30, 0.75);
+                border: 0.5px solid rgba(255, 255, 255, 0.12);
+                box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3), 0 1px 3px rgba(0, 0, 0, 0.2);
+            }
+            
+            .form-group input,
+            .form-group textarea {
+                background: rgba(142, 142, 147, 0.2);
+                color: #f5f5f7;
+            }
+            
+            .form-group input:focus,
+            .form-group textarea:focus {
+                background: rgba(142, 142, 147, 0.25);
+                border-color: #5ac8fa;
+            }
+            
+            .list-item {
+                border-bottom-color: rgba(255, 255, 255, 0.1);
+            }
+            
+            .list-item:active {
+                background-color: rgba(255, 255, 255, 0.08);
+            }
+            
+            .list-item-label {
+                color: #f5f5f7;
+            }
+            
+            .switch {
+                background: rgba(142, 142, 147, 0.4);
+            }
+            
+            .switch.active {
+                background: #30d158;
+            }
+            
+            .switch::after {
+                background: #ffffff;
+            }
+            
+            .result {
+                background: rgba(142, 142, 147, 0.2);
+                color: #f5f5f7;
+            }
+            
+            .result-card {
+                background: rgba(28, 28, 30, 0.9);
+                border-color: rgba(255, 255, 255, 0.1);
+            }
+            
+            .checkbox-label span {
+                color: #f5f5f7;
+            }
+            
+            .client-btn {
+                background: rgba(0, 122, 255, 0.15) !important;
+                border-color: rgba(0, 122, 255, 0.3) !important;
+                color: #5ac8fa !important;
+            }
+            
+            .footer a {
+                color: #5ac8fa !important;
+            }
+            
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>优选生成器</h1>
-            <p>服务器矩阵聚合管理系统</p>
+            <h1>服务器优选工具</h1>
+            <p>智能优选 • 一键生成</p>
         </div>
-
+        
         <div class="card">
             <div class="form-group">
                 <label>服务器矩阵列表 (多机聚合)</label>
@@ -811,97 +1217,157 @@ function generateHomePage(scuValue) {
                     <div class="server-row" style="display: flex; gap: 6px; margin-bottom: 12px; align-items: center;">
                         <input type="text" class="server-input s-domain" style="flex: 1; min-width: 0; padding: 10px; border-radius: 8px; border: 1px solid rgba(142,142,147,0.3); background: rgba(142,142,147,0.12); color: inherit;" placeholder="域名/主机名">
                         <input type="text" class="server-input s-uuid" style="flex: 1; min-width: 0; padding: 10px; border-radius: 8px; border: 1px solid rgba(142,142,147,0.3); background: rgba(142,142,147,0.12); color: inherit;" placeholder="UUID/密码">
-                        <input type="text" class="server-input s-prefix" style="width: 80px; padding: 10px; border-radius: 8px; border: 1px solid rgba(142,142,147,0.3); background: rgba(142,142,147,0.12); color: inherit;" placeholder="前缀" value="Node">
-                        <button type="button" onclick="addServerRow()" style="width: 36px; height: 36px; background: #34C759; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; flex-shrink: 0; box-shadow: none; padding: 0;">+</button>
+                        <input type="text" class="server-input s-prefix" style="width: 80px; padding: 10px; border-radius: 8px; border: 1px solid rgba(142,142,147,0.3); background: rgba(142,142,147,0.12); color: inherit;" placeholder="前缀(如jp)" value="Node">
+                        <button type="button" onclick="addServerRow()" style="width: 36px; height: 36px; background: #34C759; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; flex-shrink: 0;">+</button>
                     </div>
                 </div>
             </div>
-        </div>
-
-        <div class="card">
+            
             <div class="form-group">
-                <label>专属自定义选项</label>
-                <div class="list-item">
-                    <div class="list-item-label">启用 VLESS 协议</div>
-                    <label class="switch"><input type="checkbox" id="switchVL" checked onchange="toggleSwitch('switchVL')"><span class="slider"></span></label>
+                <label>UUID/Password</label>
+                <input type="text" id="uuid" placeholder="请输入UUID或Password">
+            </div>
+            
+            <div class="form-group">
+                <label>WebSocket路径（可选）</label>
+                <input type="text" id="customPath" placeholder="留空则使用默认路径 /" value="/">
+                <small style="display: block; margin-top: 6px; color: #86868b; font-size: 13px;">自定义WebSocket路径，例如：/v2ray 或 /</small>
+            </div>
+            
+            <div class="list-item" onclick="toggleSwitch('switchDomain')">
+                <div>
+                    <div class="list-item-label">启用优选域名</div>
                 </div>
-                <div class="list-item">
-                    <div class="list-item-label">启用 Trojan 协议</div>
-                    <label class="switch"><input type="checkbox" id="switchTJ" onchange="toggleSwitch('switchTJ')"><span class="slider"></span></label>
+                <div class="switch active" id="switchDomain"></div>
+            </div>
+            
+            <div class="list-item" onclick="toggleSwitch('switchIP')">
+                <div>
+                    <div class="list-item-label">启用优选IP</div>
                 </div>
-                <div class="list-item">
-                    <div class="list-item-label">启用 VMess 协议</div>
-                    <label class="switch"><input type="checkbox" id="switchVM" onchange="toggleSwitch('switchVM')"><span class="slider"></span></label>
+                <div class="switch active" id="switchIP"></div>
+            </div>
+            
+            <div class="list-item" onclick="toggleSwitch('switchGitHub')">
+                <div>
+                    <div class="list-item-label">启用GitHub优选</div>
                 </div>
-                <div class="list-item">
-                    <div class="list-item-label">仅保留 TLS 节点</div>
-                    <label class="switch"><input type="checkbox" id="switchTLS" onchange="toggleSwitch('switchTLS')"><span class="slider"></span></label>
+                <div class="switch active" id="switchGitHub"></div>
+            </div>
+            
+            <div class="form-group" id="githubUrlGroup" style="margin-top: 12px;">
+                <label>GitHub优选URL（可选）</label>
+                <input type="text" id="githubUrl" placeholder="留空则使用默认地址" style="font-size: 15px;">
+                <small style="display: block; margin-top: 6px; color: #86868b; font-size: 13px;">自定义优选IP列表来源URL，留空则使用默认地址</small>
+            </div>
+            
+            <div class="form-group" style="margin-top: 24px;">
+                <label>协议选择</label>
+                <div style="margin-top: 8px;">
+                    <div class="list-item" onclick="toggleSwitch('switchVL')">
+                        <div>
+                            <div class="list-item-label">VLESS (vl)</div>
+                        </div>
+                        <div class="switch active" id="switchVL"></div>
+                    </div>
+                    <div class="list-item" onclick="toggleSwitch('switchTJ')">
+                        <div>
+                            <div class="list-item-label">Trojan (tj)</div>
+                        </div>
+                        <div class="switch" id="switchTJ"></div>
+                    </div>
+                    <div class="list-item" onclick="toggleSwitch('switchVM')">
+                        <div>
+                            <div class="list-item-label">VMess (vm)</div>
+                        </div>
+                        <div class="switch" id="switchVM"></div>
+                    </div>
                 </div>
             </div>
-            <div class="form-group" style="margin-top: 16px;">
-                <label>自定义连接路径</label>
-                <input type="text" id="customPath" placeholder="/" value="/">
+            
+            <div class="form-group" style="margin-top: 24px;">
+                <label>客户端选择</label>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; margin-top: 8px;">
+                    <button type="button" class="client-btn" onclick="generateClientLink('clash', 'CLASH')">CLASH</button>
+                    <button type="button" class="client-btn" onclick="generateClientLink('clash', 'STASH')">STASH</button>
+                    <button type="button" class="client-btn" onclick="generateClientLink('surge', 'SURGE')">SURGE</button>
+                    <button type="button" class="client-btn" onclick="generateClientLink('sing-box', 'SING-BOX')">SING-BOX</button>
+                    <button type="button" class="client-btn" onclick="generateClientLink('loon', 'LOON')">LOON</button>
+                    <button type="button" class="client-btn" onclick="generateClientLink('quanx', 'QUANTUMULT X')" style="font-size: 13px;">QUANTUMULT X</button>
+                    <button type="button" class="client-btn" onclick="generateClientLink('v2ray', 'V2RAY')">V2RAY</button>
+                    <button type="button" class="client-btn" onclick="generateClientLink('v2ray', 'V2RAYNG')">V2RAYNG</button>
+                    <button type="button" class="client-btn" onclick="generateClientLink('v2ray', 'NEKORAY')">NEKORAY</button>
+                    <button type="button" class="client-btn" onclick="generateClientLink('v2ray', 'Shadowrocket')" style="font-size: 13px;">Shadowrocket</button>
+                </div>
+                <div class="result-url" id="clientSubscriptionUrl" style="display: none; margin-top: 12px; padding: 12px; background: rgba(0, 122, 255, 0.1); border-radius: 8px; font-size: 13px; color: #007aff; word-break: break-all;"></div>
             </div>
-            <div class="form-group" style="margin-top: 16px;">
-                <label>GitHub 优选或外部 API URL</label>
-                <input type="text" id="githubUrl" placeholder="留空则使用内置默认源">
+            
+            <div class="form-group">
+                <label>IP版本选择</label>
+                <div style="display: flex; gap: 16px; margin-top: 8px;">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="ipv4Enabled" checked>
+                        <span>IPv4</span>
+                    </label>
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="ipv6Enabled" checked>
+                        <span>IPv6</span>
+                    </label>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label>运营商选择</label>
+                <div style="display: flex; gap: 16px; flex-wrap: wrap; margin-top: 8px;">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="ispMobile" checked>
+                        <span>移动</span>
+                    </label>
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="ispUnicom" checked>
+                        <span>联通</span>
+                    </label>
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="ispTelecom" checked>
+                        <span>电信</span>
+                    </label>
+                </div>
+            </div>
+            
+            <div class="list-item" onclick="toggleSwitch('switchTLS')" style="margin-top: 8px;">
+                <div>
+                    <div class="list-item-label">仅TLS节点</div>
+                    <div class="list-item-description">启用后只生成带TLS的节点，不生成非TLS节点（如80端口）</div>
+                </div>
+                <div class="switch" id="switchTLS"></div>
+            </div>
+            
+            <div class="list-item" onclick="toggleSwitch('switchECH')" style="margin-top: 8px;">
+                <div>
+                    <div class="list-item-label">ECH (Encrypted Client Hello)</div>
+                    <div class="list-item-description">启用后节点链接将携带 ECH 参数，需客户端支持；开启时自动仅TLS</div>
+                </div>
+                <div class="switch" id="switchECH"></div>
+            </div>
+            <div class="form-group" id="echOptionsGroup" style="margin-top: 12px; display: none;">
+                <label>ECH 自定义 DNS（可选）</label>
+                <input type="text" id="customDNS" placeholder="例如: https://dns.joeyblog.eu.org/joeyblog" style="font-size: 14px;">
+                <small style="display: block; margin-top: 6px; color: #86868b; font-size: 13px;">用于 ECH 配置查询的 DoH 地址</small>
+                <label style="margin-top: 12px; display: block;">ECH 域名（可选）</label>
+                <input type="text" id="customECHDomain" placeholder="例如: cloudflare-ech.com" style="font-size: 14px;">
             </div>
         </div>
-
-        <div class="card">
-            <div class="form-group">
-                <label>网络层过滤与探测</label>
-                <div class="list-item">
-                    <div class="list-item-label">包含 IPv4 节点</div>
-                    <label class="switch"><input type="checkbox" id="ipv4Enabled" checked><span class="slider"></span></label>
-                </div>
-                <div class="list-item">
-                    <div class="list-item-label">包含 IPv6 节点</div>
-                    <label class="switch"><input type="checkbox" id="ipv6Enabled" checked><span class="slider"></span></label>
-                </div>
-                <div class="list-item" style="border-bottom:none; padding-bottom:0;">
-                    <div class="list-item-label" style="font-weight:600; font-size:14px; margin-top:8px; color:#86868b;">运营商运营商精确筛选</div>
-                </div>
-                <div class="list-item">
-                    <div class="list-item-label">中国移动</div>
-                    <label class="switch"><input type="checkbox" id="ispMobile" checked><span class="slider"></span></label>
-                </div>
-                <div class="list-item">
-                    <div class="list-item-label">中国联通</div>
-                    <label class="switch"><input type="checkbox" id="ispUnicom" checked><span class="slider"></span></label>
-                </div>
-                <div class="list-item">
-                    <div class="list-item-label">中国电信</div>
-                    <label class="switch"><input type="checkbox" id="ispTelecom" checked><span class="slider"></span></label>
-                </div>
-            </div>
-        </div>
-
-        <div class="card">
-            <div class="form-group">
-                <label>一键下发配置订阅</label>
-                <div class="btn-group">
-                    <button type="button" onclick="generateClientLink('v2ray', '通用订阅')">复制通用订阅</button>
-                    <button type="button" class="btn-secondary" onclick="generateClientLink('clash', 'Clash')">Clash 订阅</button>
-                </div>
-                <div class="btn-group" style="margin-top:12px;">
-                    <button type="button" class="btn-secondary" onclick="generateClientLink('singbox', 'Sing-box')">Sing-box</button>
-                    <button type="button" class="btn-secondary" onclick="generateClientLink('surge', 'Surge')">Surge</button>
-                </div>
-                <div id="clientSubscriptionUrl"></div>
+        
+        <div class="footer">
+            <p>简化版优选工具 • 仅用于节点生成</p>
+            <div style="margin-top: 20px; display: flex; justify-content: center; gap: 24px; flex-wrap: wrap;">
+                <a href="https://github.com/byJoey/yx-auto" target="_blank" style="color: #007aff; text-decoration: none; font-size: 15px; font-weight: 500;">GitHub 项目</a>
+                <a href="https://www.youtube.com/@joeyblog" target="_blank" style="color: #007aff; text-decoration: none; font-size: 15px; font-weight: 500;">YouTube @joeyblog</a>
             </div>
         </div>
     </div>
-
+    
     <script>
-        const SUB_CONVERTER_URL = "${scu}";
-        let switches = {
-            switchVL: true,
-            switchTJ: false,
-            switchVM: false,
-            switchTLS: false
-        };
-
         function addServerRow() {
             const container = document.getElementById('serverContainer');
             const row = document.createElement('div');
@@ -910,16 +1376,86 @@ function generateHomePage(scuValue) {
             row.innerHTML = `
                 <input type="text" class="server-input s-domain" style="flex: 1; min-width: 0; padding: 10px; border-radius: 8px; border: 1px solid rgba(142,142,147,0.3); background: rgba(142,142,147,0.12); color: inherit;" placeholder="域名/主机名">
                 <input type="text" class="server-input s-uuid" style="flex: 1; min-width: 0; padding: 10px; border-radius: 8px; border: 1px solid rgba(142,142,147,0.3); background: rgba(142,142,147,0.12); color: inherit;" placeholder="UUID/密码">
-                <input type="text" class="server-input s-prefix" style="width: 80px; padding: 10px; border-radius: 8px; border: 1px solid rgba(142,142,147,0.3); background: rgba(142,142,147,0.12); color: inherit;" placeholder="前缀" value="Node">
-                <button type="button" onclick="this.parentElement.remove()" style="width: 36px; height: 36px; background: #FF3B30; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; flex-shrink: 0; box-shadow: none; padding: 0;">-</button>
+                <input type="text" class="server-input s-prefix" style="width: 80px; padding: 10px; border-radius: 8px; border: 1px solid rgba(142,142,147,0.3); background: rgba(142,142,147,0.12); color: inherit;" placeholder="前缀(如jp)" value="Node">
+                <button type="button" onclick="this.parentElement.remove()" style="width: 36px; height: 36px; background: #FF3B30; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; flex-shrink: 0;">-</button>
             `;
             container.appendChild(row);
         }
-
+        let switches = {
+            switchDomain: true,
+            switchIP: true,
+            switchGitHub: true,
+            switchVL: true,
+            switchTJ: false,
+            switchVM: false,
+            switchTLS: false,
+            switchECH: false
+        };
+        
         function toggleSwitch(id) {
-            switches[id] = document.getElementById(id).checked;
+            const switchEl = document.getElementById(id);
+            switches[id] = !switches[id];
+            switchEl.classList.toggle('active');
+            if (id === 'switchECH') {
+                const echOpt = document.getElementById('echOptionsGroup');
+                if (echOpt) echOpt.style.display = switches.switchECH ? 'block' : 'none';
+                if (switches.switchECH && !switches.switchTLS) {
+                    switches.switchTLS = true;
+                    const tlsEl = document.getElementById('switchTLS');
+                    if (tlsEl) tlsEl.classList.add('active');
+                }
+            }
         }
-
+        
+        
+        // 订阅转换地址（从服务器注入）
+        const SUB_CONVERTER_URL = "${ scu }";
+        
+        function tryOpenApp(schemeUrl, fallbackCallback, timeout) {
+            timeout = timeout || 2500;
+            let appOpened = false;
+            let callbackExecuted = false;
+            const startTime = Date.now();
+            
+            const blurHandler = () => {
+                const elapsed = Date.now() - startTime;
+                if (elapsed < 3000 && !callbackExecuted) {
+                    appOpened = true;
+                }
+            };
+            
+            window.addEventListener('blur', blurHandler);
+            
+            const hiddenHandler = () => {
+                const elapsed = Date.now() - startTime;
+                if (elapsed < 3000 && !callbackExecuted) {
+                    appOpened = true;
+                }
+            };
+            
+            document.addEventListener('visibilitychange', hiddenHandler);
+            
+            const iframe = document.createElement('iframe');
+            iframe.style.display = 'none';
+            iframe.style.width = '1px';
+            iframe.style.height = '1px';
+            iframe.src = schemeUrl;
+            document.body.appendChild(iframe);
+            
+            setTimeout(() => {
+                if (iframe.parentNode) iframe.parentNode.removeChild(iframe);
+                window.removeEventListener('blur', blurHandler);
+                document.removeEventListener('visibilitychange', hiddenHandler);
+                
+                if (!callbackExecuted) {
+                    callbackExecuted = true;
+                    if (!appOpened && fallbackCallback) {
+                        fallbackCallback();
+                    }
+                }
+            }, timeout);
+        }
+        
         function generateClientLink(clientType, clientName) {
             const rows = document.querySelectorAll('.server-row');
             const configList = [];
@@ -953,9 +1489,10 @@ function generateHomePage(scuValue) {
             const base64Configs = btoa(encodeURIComponent(JSON.stringify(configList))).replace(/=/g, '');
             const currentUrl = new URL(window.location.href);
             
-            let subscriptionUrl = \`\${currentUrl.origin}/aggregate/sub?configs=\${base64Configs}&epd=yes&epi=yes&egi=yes\`;
+            // 路由指向 /aggregate/sub 聚合端点
+            let subscriptionUrl = `${currentUrl.origin}/aggregate/sub?configs=${base64Configs}&epd=${switches.switchDomain ? 'yes' : 'no'}&epi=${switches.switchIP ? 'yes' : 'no'}&egi=${switches.switchGitHub ? 'yes' : 'no'}`;
             
-            if (githubUrl) subscriptionUrl += \`&piu=\${encodeURIComponent(githubUrl)}\`;
+            if (githubUrl) subscriptionUrl += `&piu=${encodeURIComponent(githubUrl)}`;
             if (switches.switchVL) subscriptionUrl += '&ev=yes';
             if (switches.switchTJ) subscriptionUrl += '&et=yes';
             if (switches.switchVM) subscriptionUrl += '&mess=yes';
@@ -965,15 +1502,25 @@ function generateHomePage(scuValue) {
             if (!ispUnicom) subscriptionUrl += '&ispUnicom=no';
             if (!ispTelecom) subscriptionUrl += '&ispTelecom=no';
             if (switches.switchTLS) subscriptionUrl += '&dkby=yes';
-            if (customPath && customPath !== '/') subscriptionUrl += \`&path=\${encodeURIComponent(customPath)}\`;
+            if (switches.switchECH) {
+                subscriptionUrl += '&ech=yes';
+                const dnsVal = document.getElementById('customDNS')?.value.trim();
+                if (dnsVal) subscriptionUrl += `&customDNS=${encodeURIComponent(dnsVal)}`;
+                const domainVal = document.getElementById('customECHDomain')?.value.trim();
+                if (domainVal) subscriptionUrl += `&customECHDomain=${encodeURIComponent(domainVal)}`;
+            }
+            if (customPath && customPath !== '/') subscriptionUrl += `&path=${encodeURIComponent(customPath)}`;
             
             let finalUrl = subscriptionUrl;
+            let schemeUrl = '';
+            let displayName = clientName || '';
             
             if (clientType === 'v2ray') {
+                finalUrl = subscriptionUrl;
                 const urlElement = document.getElementById('clientSubscriptionUrl');
                 urlElement.textContent = finalUrl;
                 urlElement.style.display = 'block';
-                navigator.clipboard.writeText(finalUrl).then(() => { alert(clientName + ' 订阅链接已复制'); });
+                navigator.clipboard.writeText(finalUrl).then(() => { alert(displayName + ' 订阅链接已复制'); });
             } else {
                 const encodedUrl = encodeURIComponent(subscriptionUrl);
                 finalUrl = SUB_CONVERTER_URL + '?target=' + clientType + '&url=' + encodedUrl + '&insert=false&emoji=true&list=false&xudp=false&udp=false&tfo=false&expand=true&scv=false&fdn=false&new_name=true';
@@ -988,17 +1535,78 @@ function generateHomePage(scuValue) {
 </html>`;
 }
 
-// 核心网络路由分发拦截层
-addEventListener('fetch', event => {
-    event.respondWith(handleEvent(event.request));
-});
-
-async function handleEvent(request) {
-    try {
+// 主处理函数
+export default {
+    async fetch(request, env, ctx) {
         const url = new URL(request.url);
         const path = url.pathname;
-
-        // 路由1：多机矩阵网格化聚合传输
+        
+        // 主页
+        if (path === '/' || path === '') {
+            const scuValue = env?.scu || scu;
+            return new Response(generateHomePage(scuValue), {
+                headers: { 'Content-Type': 'text/html; charset=utf-8' }
+            });
+        }
+        
+        // 测试优选API API: /test-optimize-api?url=xxx&port=443
+        if (path === '/test-optimize-api') {
+            if (request.method === 'OPTIONS') {
+                return new Response(null, {
+                    headers: {
+                        'Access-Control-Allow-Origin': '*',
+                        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+                        'Access-Control-Allow-Headers': 'Content-Type'
+                    }
+                });
+            }
+            
+            const apiUrl = url.searchParams.get('url');
+            const port = url.searchParams.get('port') || '443';
+            const timeout = parseInt(url.searchParams.get('timeout') || '3000');
+            
+            if (!apiUrl) {
+                return new Response(JSON.stringify({ 
+                    success: false, 
+                    error: '缺少url参数' 
+                }), {
+                    status: 400,
+                    headers: { 
+                        'Content-Type': 'application/json; charset=utf-8',
+                        'Access-Control-Allow-Origin': '*'
+                    }
+                });
+            }
+            
+            try {
+                const results = await 请求优选API([apiUrl], port, timeout);
+                return new Response(JSON.stringify({ 
+                    success: true, 
+                    results: results,
+                    total: results.length,
+                    message: `成功获取 ${results.length} 个优选IP`
+                }, null, 2), {
+                    headers: { 
+                        'Content-Type': 'application/json; charset=utf-8',
+                        'Access-Control-Allow-Origin': '*'
+                    }
+                });
+            } catch (error) {
+                return new Response(JSON.stringify({ 
+                    success: false, 
+                    error: error.message 
+                }), {
+                    status: 500,
+                    headers: { 
+                        'Content-Type': 'application/json; charset=utf-8',
+                        'Access-Control-Allow-Origin': '*'
+                    }
+                });
+            }
+        }
+        
+        // 订阅请求格式: /{UUID或Password}/sub?domain=xxx&epd=yes&epi=yes&egi=yes
+        // 多机矩阵订阅聚合
         if (path.includes('/aggregate/sub')) {
             let configs = [];
             try {
@@ -1007,10 +1615,10 @@ async function handleEvent(request) {
                     configs = JSON.parse(decodeURIComponent(atob(configParam)));
                 }
             } catch (e) {
-                return new Response('矩阵序列化解析异常', { status: 400 });
+                return new Response('矩阵服务器配置解析错误', { status: 400 });
             }
 
-            if (configs.length === 0) return new Response('无可读配置', { status: 400 });
+            if (configs.length === 0) return new Response('配置为空', { status: 400 });
 
             const target = url.searchParams.get('target') || 'base64';
             const piu = url.searchParams.get('piu') || defaultIPURL;
@@ -1023,15 +1631,23 @@ async function handleEvent(request) {
             const ispUnicom = url.searchParams.get('ispUnicom') !== 'no';
             const ispTelecom = url.searchParams.get('ispTelecom') !== 'no';
             let disableNonTLS = url.searchParams.get('dkby') === 'yes';
+            
+            const echParam = url.searchParams.get('ech');
+            const echEnabled = echParam === 'yes' || (echParam === null && enableECH);
+            if (echEnabled) disableNonTLS = true;
+            const customDNSParam = url.searchParams.get('customDNS') || customDNS;
+            const customECHDomainParam = url.searchParams.get('customECHDomain') || customECHDomain;
+            const echConfig = echEnabled ? `${customECHDomainParam}+${customDNSParam}` : null;
             const customPath = url.searchParams.get('path') || '/';
 
             let aggregatedLinks = [];
 
+            // 循环获取各台机器的节点信息
             for (const config of configs) {
                 const singleRes = await handleSubscriptionRequest(
                     request, config.uuid, config.domain, piu, ipv4Enabled, ipv6Enabled, 
                     ispMobile, ispUnicom, ispTelecom, evEnabled, etEnabled, vmEnabled, 
-                    disableNonTLS, customPath, null
+                    disableNonTLS, customPath, echConfig
                 );
                 
                 const rawText = await singleRes.text();
@@ -1042,6 +1658,7 @@ async function handleEvent(request) {
                     singleLinks = rawText.split('\n').filter(l => l.trim());
                 }
 
+                // 计数器初始化：实现需求1的格式化命名机制
                 let v4Count = 1;
                 let v6Count = 1;
                 
@@ -1057,6 +1674,7 @@ async function handleEvent(request) {
                         isV6 = true;
                     }
                     
+                    // 根据 IPv4/IPv6 以及传入的前缀自动编号
                     const newName = isV6 
                         ? `${config.prefix}-${v6Count++}-V6`
                         : `${config.prefix}-${v4Count++}-V4`;
@@ -1065,6 +1683,10 @@ async function handleEvent(request) {
                 });
                 
                 aggregatedLinks.push(...renamed);
+            }
+
+            if (aggregatedLinks.length === 0) {
+                aggregatedLinks.push(`vless://00000000-0000-0000-0000-000000000000@127.0.0.1:80?encryption=none&security=none&type=ws&host=error.com&path=%2F#${encodeURIComponent("聚合节点为空")}`);
             }
 
             let subscriptionContent;
@@ -1097,36 +1719,60 @@ async function handleEvent(request) {
                 },
             });
         }
+                // 补上缺失的主页路由：如果直接访问根路径，渲染优选前端网页
+        if (path === '/' || path === '') {
+            return new Response(generateHomePage(scu), {
+                headers: {
+                    'Content-Type': 'text/html; charset=utf-8',
+                    'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
+                },
+            });
+        }
 
-        // 路由2：常规单节点传统订阅拦截格式 /{UUID或Password}/sub
         const pathMatch = path.match(/^\/([^\/]+)\/sub$/);
         if (pathMatch) {
             const uuid = pathMatch[1];
-            const domain = url.searchParams.get('domain') || '';
+            
+            const domain = url.searchParams.get('domain');
+            if (!domain) {
+                return new Response('缺少域名参数', { status: 400 });
+            }
+            
+            // 从URL参数获取配置
+            epd = url.searchParams.get('epd') !== 'no';
+            epi = url.searchParams.get('epi') !== 'no';
+            egi = url.searchParams.get('egi') !== 'no';
             const piu = url.searchParams.get('piu') || defaultIPURL;
-            const evEnabled = url.searchParams.get('ev') === 'yes' || url.searchParams.get('ev') === null;
+            
+            // 协议选择
+            const evEnabled = url.searchParams.get('ev') === 'yes' || (url.searchParams.get('ev') === null && ev);
             const etEnabled = url.searchParams.get('et') === 'yes';
             const vmEnabled = url.searchParams.get('mess') === 'yes';
+            
+            // IPv4/IPv6选择
             const ipv4Enabled = url.searchParams.get('ipv4') !== 'no';
             const ipv6Enabled = url.searchParams.get('ipv6') !== 'no';
+            
+            // 运营商选择
             const ispMobile = url.searchParams.get('ispMobile') !== 'no';
             const ispUnicom = url.searchParams.get('ispUnicom') !== 'no';
             const ispTelecom = url.searchParams.get('ispTelecom') !== 'no';
+            
+            // TLS控制（ECH 开启时强制仅 TLS）
             let disableNonTLS = url.searchParams.get('dkby') === 'yes';
+            const echParam = url.searchParams.get('ech');
+            const echEnabled = echParam === 'yes' || (echParam === null && enableECH);
+            if (echEnabled) disableNonTLS = true;
+            const customDNSParam = url.searchParams.get('customDNS') || customDNS;
+            const customECHDomainParam = url.searchParams.get('customECHDomain') || customECHDomain;
+            const echConfig = echEnabled ? `${customECHDomainParam}+${customDNSParam}` : null;
+
+            // 自定义路径
             const customPath = url.searchParams.get('path') || '/';
 
-            return await handleSubscriptionRequest(request, uuid, domain, piu, ipv4Enabled, ipv6Enabled, ispMobile, ispUnicom, ispTelecom, evEnabled, etEnabled, vmEnabled, disableNonTLS, customPath, null);
+            return await handleSubscriptionRequest(request, uuid, domain, piu, ipv4Enabled, ipv6Enabled, ispMobile, ispUnicom, ispTelecom, evEnabled, etEnabled, vmEnabled, disableNonTLS, customPath, echConfig);
         }
-
-        // 路由3：兜底拦截，只要直接访问根目录路径 '/'，直接推送前端 HTML 控制台界面
-        return new Response(generateHomePage(scu), {
-            headers: { 
-                'Content-Type': 'text/html; charset=utf-8',
-                'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
-            }
-        });
-
-    } catch (err) {
-        return new Response(err.toString(), { status: 500 });
+        
+        return new Response('Not Found', { status: 404 });
     }
-}
+};

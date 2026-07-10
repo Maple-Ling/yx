@@ -1397,7 +1397,7 @@ function generateHomePage(scuValue) {
           const group = document.createElement('div');
           group.className = 'server-group grid grid-cols-1 md:grid-cols-4 gap-2 p-3 bg-gray-50 rounded';
 
-          group.innerHTML = `
+          group.innerHTML = \`
             <div>
               <label class="block text-sm font-medium mb-1">域名</label>
               <input type="text" name="domains[]" class="w-full px-2 py-1 border rounded" placeholder="example.com">
@@ -1419,7 +1419,7 @@ function generateHomePage(scuValue) {
                 −
                </button>
             </div>
-          `;
+          \`;
           return group;
         };
 

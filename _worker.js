@@ -1492,7 +1492,7 @@ function generateHomePage(scuValue) {
             
             // 路由指向 /aggregate/sub 聚合端点
             // 拼接订阅链接
-            let subscriptionUrl = window.location.origin + '/aggregate/sub?configs=' + encodeURIComponent(configsJson);
+            let subscriptionUrl = window.location.origin + '/aggregate/sub?configs=' + encodeURIComponent(base64Configs);
             if (piu) subscriptionUrl += '&piu=' + encodeURIComponent(piu);
             if (!ipv4Enabled) subscriptionUrl += '&ipv4=no';
             if (!ipv6Enabled) subscriptionUrl += '&ipv6=no';

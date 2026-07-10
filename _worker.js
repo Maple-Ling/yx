@@ -1550,19 +1550,20 @@ function generateHomePage(scuValue) {
             const currentUrl = new URL(window.location.href);
             const baseUrl = currentUrl.origin;
             // 将所有配置组的参数都添加到链接中
-            let subscriptionUrl = \`${baseUrl}/multi/sub?epd=${switches.switchDomain ? 'yes' : 'no'}&epi=${switches.switchIP ? 'yes' : 'no'}&egi=${switches.switchGitHub ? 'yes' : 'no'}\`;
+            let subscriptionUrl = \`\${baseUrl}/multi/sub?epd=${switches.switchDomain ? 'yes' : 'no'}&epi=${switches.switchIP ? 'yes' : 'no'}&egi=${switches.switchGitHub ? 'yes' : 'no'}\`;
 
             groups.forEach((group, index) => {
-              subscriptionUrl += \`&domains[]=${encodeURIComponent(group.domain)}\`;
-              subscriptionUrl += \`&uuids[]=${encodeURIComponent(group.uuid)}\`;
-              subscriptionUrl += \`&paths[]=${encodeURIComponent(group.path)}\`;
-              subscriptionUrl += \`&prefixes[]=${encodeURIComponent(group.prefix)}\`;
+                subscriptionUrl += \`&domains[]=\${encodeURIComponent(group.domain)}\`;
+                subscriptionUrl += \`&uuids[]=\${encodeURIComponent(group.uuid)}\`;
+                subscriptionUrl += \`&paths[]=\${encodeURIComponent(group.path)}\`;
+                subscriptionUrl += \`&prefixes[]=\${encodeURIComponent(group.prefix)}\`;
             });
 
             // 添加GitHub优选URL
             if (githubUrl) {
                 subscriptionUrl += \`&piu=\${encodeURIComponent(githubUrl)}\`;
             }
+            // ... 其他类似的加 &customDNS=、&path= 等也要同样转义
             
             // 添加协议选择
             if (switches.switchVL) subscriptionUrl += '&ev=yes';

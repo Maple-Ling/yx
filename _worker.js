@@ -1459,7 +1459,7 @@ function generateHomePage(scuValue) {
         
         
         // 订阅转换地址（从服务器注入）
-        const SUB_CONVERTER_URL = "${ scu }";
+        const SUB_CONVERTER_URL = \"${ scu }\";
         
         function tryOpenApp(schemeUrl, fallbackCallback, timeout) {
             timeout = timeout || 2500;
@@ -1550,7 +1550,7 @@ function generateHomePage(scuValue) {
             const currentUrl = new URL(window.location.href);
             const baseUrl = currentUrl.origin;
             // 将所有配置组的参数都添加到链接中
-            let subscriptionUrl = `${baseUrl}/multi/sub?epd=${switches.switchDomain ? 'yes' : 'no'}&epi=${switches.switchIP ? 'yes' : 'no'}&egi=${switches.switchGitHub ? 'yes' : 'no'}`;
+            let subscriptionUrl = \`${baseUrl}/multi/sub?epd=${switches.switchDomain ? 'yes' : 'no'}&epi=${switches.switchIP ? 'yes' : 'no'}&egi=${switches.switchGitHub ? 'yes' : 'no'}\`;
 
             groups.forEach((group, index) => {
               subscriptionUrl += `&domains[]=${encodeURIComponent(group.domain)}`;

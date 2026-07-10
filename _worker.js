@@ -1489,7 +1489,20 @@ function generateHomePage(scuValue) {
             const currentUrl = new URL(window.location.href);
             
             // 路由指向 /aggregate/sub 聚合端点
-            let subscriptionUrl = `${currentUrl.origin}/aggregate/sub?configs=${base64Configs}&epd=${switches.switchDomain ? 'yes' : 'no'}&epi=${switches.switchIP ? 'yes' : 'no'}&egi=${switches.switchGitHub ? 'yes' : 'no'}`;
+            // 拼接订阅链接
+            let subscriptionUrl = currentUrl.origin + '/aggregate/sub?configs=' + encodeURIComponent(configsJson);
+            if (piu) subscriptionUrl += '&piu=' + encodeURIComponent(piu);
+            if (!ipv4Enabled) subscriptionUrl += '&ipv4=no';
+            if (!ipv6Enabled) subscriptionUrl += '&ipv6=no';
+            if (!ispMobile) subscriptionUrl += '&ispMobile=no';
+            if (!ispUnicom) subscriptionUrl += '&ispUnicom=no';
+            if (!ispTelecom) subscriptionUrl += '&ispTelecom=no';
+            if (evEnabled) subscriptionUrl += '&vless=yes';
+            if (etEnabled) subscriptionUrl += '&trojan=yes';
+            if (vmEnabled) subscriptionUrl += '&mess=yes';
+            if (disableNonTLS) subscriptionUrl += '&dkby=yes';
+            if (customPath !== '/') subscriptionUrl += '&path=' + encodeURIComponent(customPath);
+            if (echConfig) subscriptionUrl += '&ech=yes';
             
             if (githubUrl) subscriptionUrl += `&piu=${encodeURIComponent(githubUrl)}`;
             if (switches.switchVL) subscriptionUrl += '&ev=yes';

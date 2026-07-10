@@ -1719,6 +1719,16 @@ export default {
                 },
             });
         }
+                // 补上缺失的主页路由：如果直接访问根路径，渲染优选前端网页
+        if (path === '/' || path === '') {
+            return new Response(generateHomePage(scu), {
+                headers: {
+                    'Content-Type': 'text/html; charset=utf-8',
+                    'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
+                },
+            });
+        }
+
         const pathMatch = path.match(/^\/([^\/]+)\/sub$/);
         if (pathMatch) {
             const uuid = pathMatch[1];

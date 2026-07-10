@@ -1553,10 +1553,10 @@ function generateHomePage(scuValue) {
             let subscriptionUrl = \`${baseUrl}/multi/sub?epd=${switches.switchDomain ? 'yes' : 'no'}&epi=${switches.switchIP ? 'yes' : 'no'}&egi=${switches.switchGitHub ? 'yes' : 'no'}\`;
 
             groups.forEach((group, index) => {
-              subscriptionUrl += `&domains[]=${encodeURIComponent(group.domain)}`;
-              subscriptionUrl += `&uuids[]=${encodeURIComponent(group.uuid)}`;
-              subscriptionUrl += `&paths[]=${encodeURIComponent(group.path)}`;
-              subscriptionUrl += `&prefixes[]=${encodeURIComponent(group.prefix)}`;
+              subscriptionUrl += \`&domains[]=${encodeURIComponent(group.domain)}\`;
+              subscriptionUrl += \`&uuids[]=${encodeURIComponent(group.uuid)}\`;
+              subscriptionUrl += \`&paths[]=${encodeURIComponent(group.path)}\`;
+              subscriptionUrl += \`&prefixes[]=${encodeURIComponent(group.prefix)}\`;
             });
 
             // 添加GitHub优选URL

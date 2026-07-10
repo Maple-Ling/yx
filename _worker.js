@@ -742,6 +742,17 @@ function generateQuantumultConfig(links) {
     return btoa(links.join('\n'));
 }
 
+let switches = {
+            switchDomain: true,
+            switchIP: true,
+            switchGitHub: true,
+            switchVL: true,
+            switchTJ: false,
+            switchVM: false,
+            switchTLS: false,
+            switchECH: false
+        };
+        
 // 生成iOS 26风格的主页
 function generateHomePage(scuValue) {
     const scu = scuValue || 'https://url.v1.mk/sub';
@@ -1378,16 +1389,7 @@ function generateHomePage(scuValue) {
     </div>
     
     <script>
-        let switches = {
-            switchDomain: true,
-            switchIP: true,
-            switchGitHub: true,
-            switchVL: true,
-            switchTJ: false,
-            switchVM: false,
-            switchTLS: false,
-            switchECH: false
-        };
+        
         // --- 动态服务器配置组逻辑开始 ---
         const container = document.getElementById('server-groups-container');
         const addButton = document.getElementById('add-group');

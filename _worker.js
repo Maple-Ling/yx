@@ -1213,7 +1213,12 @@ function generateHomePage(scuValue) {
                 <input type="text" id="customPath" placeholder="留空则使用默认路径 /" value="/">
                 <small style="display: block; margin-top: 6px; color: #86868b; font-size: 13px;">自定义WebSocket路径，例如：/v2ray 或 /</small>
             </div>
-            
+            <div class="form-group">
+                <label>节点前缀（可选）</label>
+                <input type="text" id="nodePrefix" placeholder="例如: JP, US" style="text-transform: uppercase;">
+                <small style="display: block; margin-top: 6px; color: #86868b; font-size: 13px;">自定义节点名称前缀，留空则使用默认规则</small>
+            </div>
+
             <div class="list-item" onclick="toggleSwitch('switchDomain')">
                 <div>
                     <div class="list-item-label">启用优选域名</div>
@@ -1427,6 +1432,7 @@ function generateHomePage(scuValue) {
             const domain = document.getElementById('domain').value.trim();
             const uuid = document.getElementById('uuid').value.trim();
             const customPath = document.getElementById('customPath').value.trim() || '/';
+            const nodePrefix = document.getElementById('nodePrefix').value.trim();
             
             if (!domain || !uuid) {
                 alert('请先填写域名和UUID/Password');
@@ -1481,7 +1487,11 @@ function generateHomePage(scuValue) {
             if (customPath && customPath !== '/') {
                 subscriptionUrl += \`&path=\${encodeURIComponent(customPath)}\`;
             }
-            
+            // 添加节点前缀
+            if (nodePrefix) {
+                subscriptionUrl += \`&prefix=\${encodeURIComponent(nodePrefix)}\`;
+            }
+
             let finalUrl = subscriptionUrl;
             let schemeUrl = '';
             let displayName = clientName || '';

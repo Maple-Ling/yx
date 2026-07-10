@@ -1214,15 +1214,19 @@ function generateHomePage(scuValue) {
             <div class="form-group">
                 <label>服务器矩阵列表 (多机聚合)</label>
                 <div id="serverContainer">
-                    <div class="server-row" style="display: flex; gap: 8px; margin-bottom: 12px; align-items: center;">
+                    <div class="server-row" style="display: flex; gap: 6px; margin-bottom: 12px; align-items: center;">
                         <input type="text" class="server-input s-domain" style="flex: 1; min-width: 0; padding: 10px; border-radius: 8px; border: 1px solid rgba(142,142,147,0.3); background: rgba(142,142,147,0.12); color: inherit;" placeholder="域名/主机名">
                         <input type="text" class="server-input s-uuid" style="flex: 1; min-width: 0; padding: 10px; border-radius: 8px; border: 1px solid rgba(142,142,147,0.3); background: rgba(142,142,147,0.12); color: inherit;" placeholder="UUID/密码">
-                        <input type="text" class="server-input s-prefix" style="width: 90px; padding: 10px; border-radius: 8px; border: 1px solid rgba(142,142,147,0.3); background: rgba(142,142,147,0.12); color: inherit;" placeholder="节点前缀" value="Node">
-                        <button type="button" onclick="addServerRow()" style="width: 38px; height: 38px; background: #34C759; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; flex-shrink: 0;">+</button>
+                        <input type="text" class="server-input s-prefix" style="width: 80px; padding: 10px; border-radius: 8px; border: 1px solid rgba(142,142,147,0.3); background: rgba(142,142,147,0.12); color: inherit;" placeholder="前缀(如jp)" value="Node">
+                        <button type="button" onclick="addServerRow()" style="width: 36px; height: 36px; background: #34C759; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; flex-shrink: 0;">+</button>
                     </div>
                 </div>
             </div>
-
+            
+            <div class="form-group">
+                <label>UUID/Password</label>
+                <input type="text" id="uuid" placeholder="请输入UUID或Password">
+            </div>
             
             <div class="form-group">
                 <label>WebSocket路径（可选）</label>
@@ -1364,20 +1368,19 @@ function generateHomePage(scuValue) {
     </div>
     
     <script>
-                function addServerRow() {
+        function addServerRow() {
             const container = document.getElementById('serverContainer');
             const row = document.createElement('div');
             row.className = 'server-row';
-            row.style = 'display: flex; gap: 8px; margin-bottom: 12px; align-items: center;';
+            row.style = 'display: flex; gap: 6px; margin-bottom: 12px; align-items: center;';
             row.innerHTML = `
                 <input type="text" class="server-input s-domain" style="flex: 1; min-width: 0; padding: 10px; border-radius: 8px; border: 1px solid rgba(142,142,147,0.3); background: rgba(142,142,147,0.12); color: inherit;" placeholder="域名/主机名">
                 <input type="text" class="server-input s-uuid" style="flex: 1; min-width: 0; padding: 10px; border-radius: 8px; border: 1px solid rgba(142,142,147,0.3); background: rgba(142,142,147,0.12); color: inherit;" placeholder="UUID/密码">
-                <input type="text" class="server-input s-prefix" style="width: 90px; padding: 10px; border-radius: 8px; border: 1px solid rgba(142,142,147,0.3); background: rgba(142,142,147,0.12); color: inherit;" placeholder="节点前缀" value="Node">
-                <button type="button" onclick="this.parentElement.remove()" style="width: 38px; height: 38px; background: #FF3B30; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; flex-shrink: 0;">-</button>
+                <input type="text" class="server-input s-prefix" style="width: 80px; padding: 10px; border-radius: 8px; border: 1px solid rgba(142,142,147,0.3); background: rgba(142,142,147,0.12); color: inherit;" placeholder="前缀(如jp)" value="Node">
+                <button type="button" onclick="this.parentElement.remove()" style="width: 36px; height: 36px; background: #FF3B30; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; flex-shrink: 0;">-</button>
             `;
             container.appendChild(row);
         }
-
         let switches = {
             switchDomain: true,
             switchIP: true,
@@ -1462,22 +1465,16 @@ function generateHomePage(scuValue) {
                 const domain = row.querySelector('.s-domain').value.trim();
                 const uuid = row.querySelector('.s-uuid').value.trim();
                 const prefix = row.querySelector('.s-prefix').value.trim() || 'Node';
-
-                if (!domain || !uuid) {
-                    isValid = false;
-                    return;
-                }
+                if (!domain || !uuid) { isValid = false; return; }
                 configList.push({ domain, uuid, prefix });
             });
 
             if (!isValid || configList.length === 0) {
-                alert('请完整填写至少一组服务器的域名和UUID/Password！');
+                alert('请完整填写每一组主机的域名和UUID！');
                 return;
             }
-            
-            // 检查至少选择一个协议
             if (!switches.switchVL && !switches.switchTJ && !switches.switchVM) {
-                alert('请至少选择一个协议（VLESS、Trojan或VMess）');
+                alert('请至少选择一个协议！');
                 return;
             }
             
@@ -1489,13 +1486,11 @@ function generateHomePage(scuValue) {
             const customPath = document.getElementById('customPath').value.trim() || '/';
             const githubUrl = document.getElementById('githubUrl').value.trim();
             
-            // 将多机配置打成 JSON，用安全字符 Base64 编码，发给新聚合路由端点
             const base64Configs = btoa(encodeURIComponent(JSON.stringify(configList))).replace(/=/g, '');
             const currentUrl = new URL(window.location.href);
-            const baseUrl = currentUrl.origin;
             
-            // 注意：这里我们将底层订阅路经转为专门接收多机聚合的 /aggregate/sub 路由
-            let subscriptionUrl = `${baseUrl}/aggregate/sub?configs=${base64Configs}&epd=${switches.switchDomain ? 'yes' : 'no'}&epi=${switches.switchIP ? 'yes' : 'no'}&egi=${switches.switchGitHub ? 'yes' : 'no'}`;
+            // 路由指向 /aggregate/sub 聚合端点
+            let subscriptionUrl = `${currentUrl.origin}/aggregate/sub?configs=${base64Configs}&epd=${switches.switchDomain ? 'yes' : 'no'}&epi=${switches.switchIP ? 'yes' : 'no'}&egi=${switches.switchGitHub ? 'yes' : 'no'}`;
             
             if (githubUrl) subscriptionUrl += `&piu=${encodeURIComponent(githubUrl)}`;
             if (switches.switchVL) subscriptionUrl += '&ev=yes';
@@ -1525,54 +1520,14 @@ function generateHomePage(scuValue) {
                 const urlElement = document.getElementById('clientSubscriptionUrl');
                 urlElement.textContent = finalUrl;
                 urlElement.style.display = 'block';
-                
-                if (clientName === 'V2RAY') {
-                    navigator.clipboard.writeText(finalUrl).then(() => { alert(displayName + ' 订阅链接已复制'); });
-                } else if (clientName === 'Shadowrocket') {
-                    schemeUrl = 'shadowrocket://add/' + encodeURIComponent(finalUrl);
-                    tryOpenApp(schemeUrl, () => { navigator.clipboard.writeText(finalUrl).then(() => { alert(displayName + ' 订阅链接已复制'); }); });
-                } else if (clientName === 'V2RAYNG') {
-                    schemeUrl = 'v2rayng://install?url=' + encodeURIComponent(finalUrl);
-                    tryOpenApp(schemeUrl, () => { navigator.clipboard.writeText(finalUrl).then(() => { alert(displayName + ' 订阅链接已复制'); }); });
-                } else if (clientName === 'NEKORAY') {
-                    schemeUrl = 'nekoray://install-config?url=' + encodeURIComponent(finalUrl);
-                    tryOpenApp(schemeUrl, () => { navigator.clipboard.writeText(finalUrl).then(() => { alert(displayName + ' 订阅链接已复制'); }); });
-                }
+                navigator.clipboard.writeText(finalUrl).then(() => { alert(displayName + ' 订阅链接已复制'); });
             } else {
                 const encodedUrl = encodeURIComponent(subscriptionUrl);
                 finalUrl = SUB_CONVERTER_URL + '?target=' + clientType + '&url=' + encodedUrl + '&insert=false&emoji=true&list=false&xudp=false&udp=false&tfo=false&expand=true&scv=false&fdn=false&new_name=true';
-                
                 const urlElement = document.getElementById('clientSubscriptionUrl');
                 urlElement.textContent = finalUrl;
                 urlElement.style.display = 'block';
-                
-                if (clientType === 'clash') {
-                    if (clientName === 'STASH') {
-                        schemeUrl = 'stash://install?url=' + encodeURIComponent(finalUrl);
-                        displayName = 'STASH';
-                    } else {
-                        schemeUrl = 'clash://install-config?url=' + encodeURIComponent(finalUrl);
-                        displayName = 'CLASH';
-                    }
-                } else if (clientType === 'surge') {
-                    schemeUrl = 'surge:///install-config?url=' + encodeURIComponent(finalUrl);
-                    displayName = 'SURGE';
-                } else if (clientType === 'sing-box') {
-                    schemeUrl = 'sing-box://install-config?url=' + encodeURIComponent(finalUrl);
-                    displayName = 'SING-BOX';
-                } else if (clientType === 'loon') {
-                    schemeUrl = 'loon://install?url=' + encodeURIComponent(finalUrl);
-                    displayName = 'LOON';
-                } else if (clientType === 'quanx') {
-                    schemeUrl = 'quantumult-x://install-config?url=' + encodeURIComponent(finalUrl);
-                    displayName = 'QUANTUMULT X';
-                }
-                
-                if (schemeUrl) {
-                    tryOpenApp(schemeUrl, () => { navigator.clipboard.writeText(finalUrl).then(() => { alert(displayName + ' 订阅链接已复制'); }); });
-                } else {
-                    navigator.clipboard.writeText(finalUrl).then(() => { alert(displayName + ' 订阅链接已复制'); });
-                }
+                navigator.clipboard.writeText(finalUrl).then(() => { alert(clientType.toUpperCase() + ' 订阅链接已复制'); });
             }
         }
     </script>
@@ -1651,7 +1606,7 @@ export default {
         }
         
         // 订阅请求格式: /{UUID或Password}/sub?domain=xxx&epd=yes&epi=yes&egi=yes
-                // 多机矩阵订阅聚合端点
+        // 多机矩阵订阅聚合
         if (path.includes('/aggregate/sub')) {
             let configs = [];
             try {
@@ -1663,15 +1618,9 @@ export default {
                 return new Response('矩阵服务器配置解析错误', { status: 400 });
             }
 
-            if (configs.length === 0) {
-                return new Response('未检测到有效的配置矩阵', { status: 400 });
-            }
+            if (configs.length === 0) return new Response('配置为空', { status: 400 });
 
-            // 获取通用全局筛选开关配置
             const target = url.searchParams.get('target') || 'base64';
-            const epdVal = url.searchParams.get('epd') !== 'no';
-            const epiVal = url.searchParams.get('epi') !== 'no';
-            const egiVal = url.searchParams.get('egi') !== 'no';
             const piu = url.searchParams.get('piu') || defaultIPURL;
             const evEnabled = url.searchParams.get('ev') === 'yes';
             const etEnabled = url.searchParams.get('et') === 'yes';
@@ -1682,6 +1631,7 @@ export default {
             const ispUnicom = url.searchParams.get('ispUnicom') !== 'no';
             const ispTelecom = url.searchParams.get('ispTelecom') !== 'no';
             let disableNonTLS = url.searchParams.get('dkby') === 'yes';
+            
             const echParam = url.searchParams.get('ech');
             const echEnabled = echParam === 'yes' || (echParam === null && enableECH);
             if (echEnabled) disableNonTLS = true;
@@ -1692,39 +1642,23 @@ export default {
 
             let aggregatedLinks = [];
 
-            // 循环遍历前端打包过来的每组服务器配置
+            // 循环获取各台机器的节点信息
             for (const config of configs) {
-                // 调用原版的生成底层方法
                 const singleRes = await handleSubscriptionRequest(
-                    request, 
-                    config.uuid, 
-                    config.domain, 
-                    piu, 
-                    ipv4Enabled, 
-                    ipv6Enabled, 
-                    ispMobile, 
-                    ispUnicom, 
-                    ispTelecom, 
-                    evEnabled, 
-                    etEnabled, 
-                    vmEnabled, 
-                    disableNonTLS, 
-                    customPath, 
-                    echConfig
+                    request, config.uuid, config.domain, piu, ipv4Enabled, ipv6Enabled, 
+                    ispMobile, ispUnicom, ispTelecom, evEnabled, etEnabled, vmEnabled, 
+                    disableNonTLS, customPath, echConfig
                 );
                 
                 const rawText = await singleRes.text();
                 let singleLinks = [];
-                
-                // 将原版生成的 Base64 订阅或纯文本重新还原为链接数组
                 try {
-                    const decoded = atob(rawText);
-                    singleLinks = decoded.split('\n').filter(l => l.trim());
+                    singleLinks = atob(rawText).split('\n').filter(l => l.trim());
                 } catch(err) {
                     singleLinks = rawText.split('\n').filter(l => l.trim());
                 }
 
-                // 进行节点前缀与递增序号重写：形如 “JP-1-V4”、 “JP-1-V6”
+                // 计数器初始化：实现需求1的格式化命名机制
                 let v4Count = 1;
                 let v6Count = 1;
                 
@@ -1733,17 +1667,14 @@ export default {
                     const parts = link.split('#');
                     if (parts.length < 2) return link;
                     
-                    // 提取节点本身的连接地址
                     const mainPart = parts[0];
                     let isV6 = false;
-                    
-                    // 判断该节点连接的是否为 IPv6
                     const atMatch = mainPart.match(/@([^:]+)/);
                     if (atMatch && atMatch[1] && atMatch[1].includes(':')) {
                         isV6 = true;
                     }
                     
-                    // 重新拼装节点备注名称
+                    // 根据 IPv4/IPv6 以及传入的前缀自动编号
                     const newName = isV6 
                         ? `${config.prefix}-${v6Count++}-V6`
                         : `${config.prefix}-${v4Count++}-V4`;
@@ -1754,10 +1685,8 @@ export default {
                 aggregatedLinks.push(...renamed);
             }
 
-            // 过滤无效干扰节点，输出最后结果
             if (aggregatedLinks.length === 0) {
-                const errorLink = `vless://00000000-0000-0000-0000-000000000000@127.0.0.1:80?encryption=none&security=none&type=ws&host=error.com&path=%2F#${encodeURIComponent("聚合节点获取失败")}`;
-                aggregatedLinks.push(errorLink);
+                aggregatedLinks.push(`vless://00000000-0000-0000-0000-000000000000@127.0.0.1:80?encryption=none&security=none&type=ws&host=error.com&path=%2F#${encodeURIComponent("聚合节点为空")}`);
             }
 
             let subscriptionContent;
@@ -1790,7 +1719,6 @@ export default {
                 },
             });
         }
-
         const pathMatch = path.match(/^\/([^\/]+)\/sub$/);
         if (pathMatch) {
             const uuid = pathMatch[1];

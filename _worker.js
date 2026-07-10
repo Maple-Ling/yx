@@ -1492,17 +1492,36 @@ function generateHomePage(scuValue) {
             
             // 路由指向 /aggregate/sub 聚合端点
             // 拼接订阅链接
+            // 基础链接：指向聚合端点，并带上所有机器的配置
             let subscriptionUrl = window.location.origin + '/aggregate/sub?configs=' + encodeURIComponent(base64Configs);
-            if (piu) subscriptionUrl += '&piu=' + encodeURIComponent(piu);
+
+            // 添加GitHub优选URL
+            if (githubUrl) subscriptionUrl += '&piu=' + encodeURIComponent(githubUrl);
+
+            // 添加IP和运营商筛选
             if (!ipv4Enabled) subscriptionUrl += '&ipv4=no';
             if (!ipv6Enabled) subscriptionUrl += '&ipv6=no';
             if (!ispMobile) subscriptionUrl += '&ispMobile=no';
             if (!ispUnicom) subscriptionUrl += '&ispUnicom=no';
             if (!ispTelecom) subscriptionUrl += '&ispTelecom=no';
-            if (evEnabled) subscriptionUrl += '&vless=yes';
-            if (etEnabled) subscriptionUrl += '&trojan=yes';
-            if (vmEnabled) subscriptionUrl += '&mess=yes';
-            if (disableNonTLS) subscriptionUrl += '&dkby=yes';
+
+            // 添加协议选择
+            if (switches.switchVL) subscriptionUrl += '&ev=yes';
+            if (switches.switchTJ) subscriptionUrl += '&et=yes';
+            if (switches.switchVM) subscriptionUrl += '&mess=yes';
+
+            // 添加其他选项
+            if (switches.switchTLS) subscriptionUrl += '&dkby=yes';
+            if (customPath && customPath !== '/') subscriptionUrl += '&path=' + encodeURIComponent(customPath);
+
+            // 添加ECH配置
+            if (switches.switchECH) {
+                subscriptionUrl += '&ech=yes';
+                const dnsVal = document.getElementById('customDNS')?.value.trim();
+                if (dnsVal) subscriptionUrl += '&customDNS=' + encodeURIComponent(dnsVal);
+                const domainVal = document.getElementById('customECHDomain')?.value.trim();
+                if (domainVal) subscriptionUrl += '&customECHDomain=' + encodeURIComponent(domainVal);
+            }
             if (customPath !== '/') subscriptionUrl += '&path=' + encodeURIComponent(customPath);
             if (echConfig) subscriptionUrl += '&ech=yes';
             
@@ -1676,27 +1695,30 @@ export default {
                 let v4Count = 1;
                 let v6Count = 1;
                 
+                // 对获取到的节点进行重命名，实现“前缀-序号-V4/V6”的格式
                 const renamed = singleLinks.map(link => {
-                    if (!link.includes('://')) return link;
+                    if (!link.includes('://')) return link; // 如果不是链接，直接返回
+
                     const parts = link.split('#');
-                    if (parts.length < 2) return link;
-                    
-                    const mainPart = parts[0];
+                    if (parts.length < 2) return link; // 如果没有备注，直接返回
+
+                    const mainPart = parts[0]; // 链接主体
                     let isV6 = false;
+
+                    // 判断是IPv4还是IPv6地址
                     const atMatch = mainPart.match(/@([^:]+)/);
                     if (atMatch && atMatch[1] && atMatch[1].includes(':')) {
                         isV6 = true;
                     }
+
+                    // 核心修改：使用 config.prefix 作为前缀
+                    // 这里的 config 就是循环中当前这台机器的配置对象，包含了你在网页上填写的 prefix
+                    const newName = isV6 ? `${config.prefix}-${v6Count++}-V6` : `${config.prefix}-${v4Count++}-V4`;
                     
-                    // 根据 IPv4/IPv6 以及传入的前缀自动编号
-                    const newName = isV6 
-                        ? `${config.prefix}-${v6Count++}-V6`
-                        : `${config.prefix}-${v4Count++}-V4`;
-                        
                     return `${mainPart}#${encodeURIComponent(newName)}`;
                 });
-                
                 aggregatedLinks.push(...renamed);
+
             }
 
             if (aggregatedLinks.length === 0) {

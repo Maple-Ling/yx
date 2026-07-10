@@ -1506,7 +1506,7 @@ function generateHomePage(scuValue) {
             if (customPath !== '/') subscriptionUrl += '&path=' + encodeURIComponent(customPath);
             if (echConfig) subscriptionUrl += '&ech=yes';
             
-            if (githubUrl) subscriptionUrl += `&piu=${encodeURIComponent(githubUrl)}`;
+            if (githubUrl) subscriptionUrl += '&piu=' + encodeURIComponent(githubUrl);
             if (switches.switchVL) subscriptionUrl += '&ev=yes';
             if (switches.switchTJ) subscriptionUrl += '&et=yes';
             if (switches.switchVM) subscriptionUrl += '&mess=yes';

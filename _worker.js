@@ -1684,12 +1684,19 @@ export default {
         const url = new URL(request.url);
         const path = url.pathname;
         
-        // 主页
+        // 主页（带错误捕获）
         if (path === '/' || path === '') {
-            const scuValue = env?.scu || scu;
-            return new Response(generateHomePage(scuValue), {
-                headers: { 'Content-Type': 'text/html; charset=utf-8' }
-            });
+            try {
+                const scuValue = env?.scu || scu;
+                return new Response(generateHomePage(scuValue), {
+                    headers: { 'Content-Type': 'text/html; charset=utf-8' }
+                });
+            } catch (e) {
+                return new Response(`<pre>${e.stack}</pre>`, {
+                    status: 500,
+                    headers: { 'Content-Type': 'text/plain; charset=utf-8' }
+                });
+            }
         }
         
         // 测试优选API API: /test-optimize-api?url=xxx&port=443

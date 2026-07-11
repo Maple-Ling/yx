@@ -575,7 +575,7 @@ async function handleSubscriptionRequest(request, user, customDomain, piu, ipv4E
                 nodeCounter
             ));
         }
-
+    }
     // 原生地址
     const nativeList = [{ ip: workerDomain, isp: '原生地址' }];
     await addNodesFromList(nativeList);

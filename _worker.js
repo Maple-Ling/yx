@@ -1244,17 +1244,6 @@ function generateHomePage(scuValue) {
           </button>
         </div>
 
-            <div class="form-group">
-                <label>WebSocket路径（可选）</label>
-                <input type="text" id="customPath" placeholder="留空则使用默认路径 /" value="/">
-                <small style="display: block; margin-top: 6px; color: #86868b; font-size: 13px;">自定义WebSocket路径，例如：/v2ray 或 /</small>
-            </div>
-            <div class="form-group">
-                <label>节点前缀（可选）</label>
-                <input type="text" id="nodePrefix" placeholder="例如: JP, US" style="text-transform: uppercase;">
-                <small style="display: block; margin-top: 6px; color: #86868b; font-size: 13px;">自定义节点名称前缀，留空则使用默认规则</small>
-            </div>
-
             <div class="list-item" onclick="toggleSwitch('switchDomain')">
                 <div>
                     <div class="list-item-label">启用优选域名</div>
@@ -1529,11 +1518,6 @@ function generateHomePage(scuValue) {
             alert('请至少填写一组有效的域名和UUID/Password');
             return;
           }
-  
-          // 使用第一组的配置作为全局的 customPath 和 nodePrefix（如果它们为空）
-          // 这样可以保持与旧逻辑的兼容性，如果用户只填了一组，行为不变
-          const customPath = groups[0].path;
-          const nodePrefix = groups[0].prefix;
 
             // 检查至少选择一个协议
             if (!switches.switchVL && !switches.switchTJ && !switches.switchVM) {
@@ -1586,15 +1570,6 @@ function generateHomePage(scuValue) {
                 if (dnsVal) subscriptionUrl += \`&customDNS=\${encodeURIComponent(dnsVal)}\`;
                 const domainVal = document.getElementById('customECHDomain') && document.getElementById('customECHDomain').value.trim();
                 if (domainVal) subscriptionUrl += \`&customECHDomain=\${encodeURIComponent(domainVal)}\`;
-            }
-            
-            // 添加自定义路径
-            if (customPath && customPath !== '/') {
-                subscriptionUrl += \`&path=\${encodeURIComponent(customPath)}\`;
-            }
-            // 添加节点前缀
-            if (nodePrefix) {
-                subscriptionUrl += \`&prefix=\${encodeURIComponent(nodePrefix)}\`;
             }
 
             let finalUrl = subscriptionUrl;

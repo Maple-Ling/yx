@@ -1198,14 +1198,26 @@ function generateHomePage(scuValue) {
         </div>
         
         <div class="card">
-            <div id="server-groups-container">
-                </div>
-    
-            <button type="button" id="add-group" style="margin-top: 12px; padding: 8px 16px; background: #0071e3; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 14px;">
-                ＋ 添加一组优选节点
-            </button>
-        </div>
-
+            <div class="form-group">
+                <label>域名</label>
+                <input type="text" id="domain" placeholder="请输入您的域名">
+            </div>
+            
+            <div class="form-group">
+                <label>UUID/Password</label>
+                <input type="text" id="uuid" placeholder="请输入UUID或Password">
+            </div>
+            
+            <div class="form-group">
+                <label>WebSocket路径（可选）</label>
+                <input type="text" id="customPath" placeholder="留空则使用默认路径 /" value="/">
+                <small style="display: block; margin-top: 6px; color: #86868b; font-size: 13px;">自定义WebSocket路径，例如：/v2ray 或 /</small>
+            </div>
+            <div class="form-group">
+                <label>节点前缀（可选）</label>
+                <input type="text" id="nodePrefix" placeholder="例如: JP, US" style="text-transform: uppercase;">
+                <small style="display: block; margin-top: 6px; color: #86868b; font-size: 13px;">自定义节点名称前缀，留空则使用默认规则</small>
+            </div>
 
             <div class="list-item" onclick="toggleSwitch('switchDomain')">
                 <div>
@@ -1417,18 +1429,13 @@ function generateHomePage(scuValue) {
         }
         
         function generateClientLink(clientType, clientName) {
-            const groups = document.querySelectorAll('.server-group');
-            const domains = [], uuids = [], paths = [], prefixes = [];
-
-            groups.forEach(g => {
-                domains.push(g.querySelector('input[name="domains[]"]').value.trim());
-                uuids.push(g.querySelector('input[name="uuids[]"]').value.trim());
-                paths.push(g.querySelector('input[name="paths[]"]').value.trim() || '/');
-                prefixes.push(g.querySelector('input[name="prefixes[]"]').value.trim());
-            });
-
-            if (!domains[0] || !uuids[0]) {
-                alert('请至少在第一组中填写域名和UUID/Password');
+            const domain = document.getElementById('domain').value.trim();
+            const uuid = document.getElementById('uuid').value.trim();
+            const customPath = document.getElementById('customPath').value.trim() || '/';
+            const nodePrefix = document.getElementById('nodePrefix').value.trim();
+            
+            if (!domain || !uuid) {
+                alert('请先填写域名和UUID/Password');
                 return;
             }
             
@@ -1448,19 +1455,11 @@ function generateHomePage(scuValue) {
             
             const currentUrl = new URL(window.location.href);
             const baseUrl = currentUrl.origin;
+            let subscriptionUrl = \`\${baseUrl}/\${uuid}/sub?domain=\${encodeURIComponent(domain)}&epd=\${switches.switchDomain ? 'yes' : 'no'}&epi=\${switches.switchIP ? 'yes' : 'no'}&egi=\${switches.switchGitHub ? 'yes' : 'no'}\`;
             
-            // 组装订阅链接，将多组数据用逗号拼接
-            let subscriptionUrl = `${baseUrl}/${uuids[0]}/sub?domain=${encodeURIComponent(domains[0])}&epd=${switches.switchDomain ? 'yes' : 'no'}&epi=${switches.switchIP ? 'yes' : 'no'}&egi=${switches.switchGitHub ? 'yes' : 'no'}`;
-            
-            // 聚合多组数据参数
-            if (domains.length > 0) {
-                subscriptionUrl += `&domains=${encodeURIComponent(domains.join(','))}`;
-                subscriptionUrl += `&uuids=${encodeURIComponent(uuids.join(','))}`;
-            }
-
             // 添加GitHub优选URL
             if (githubUrl) {
-                subscriptionUrl += `&piu=${encodeURIComponent(githubUrl)}`;
+                subscriptionUrl += \`&piu=\${encodeURIComponent(githubUrl)}\`;
             }
             
             // 添加协议选择
@@ -1474,22 +1473,23 @@ function generateHomePage(scuValue) {
             if (!ispUnicom) subscriptionUrl += '&ispUnicom=no';
             if (!ispTelecom) subscriptionUrl += '&ispTelecom=no';
             
-            // 添加TLS控制
+            // 添加TLS控制（ECH 开启时也会在服务端强制仅 TLS）
             if (switches.switchTLS) subscriptionUrl += '&dkby=yes';
             if (switches.switchECH) {
                 subscriptionUrl += '&ech=yes';
                 const dnsVal = document.getElementById('customDNS') && document.getElementById('customDNS').value.trim();
-                if (dnsVal) subscriptionUrl += `&customDNS=${encodeURIComponent(dnsVal)}`;
+                if (dnsVal) subscriptionUrl += \`&customDNS=\${encodeURIComponent(dnsVal)}\`;
                 const domainVal = document.getElementById('customECHDomain') && document.getElementById('customECHDomain').value.trim();
-                if (domainVal) subscriptionUrl += `&customECHDomain=${encodeURIComponent(domainVal)}`;
+                if (domainVal) subscriptionUrl += \`&customECHDomain=\${encodeURIComponent(domainVal)}\`;
             }
             
-            // 添加自定义路径与前缀（多组聚合用逗号连接）
-            if (paths.length > 0) {
-                subscriptionUrl += `&path=${encodeURIComponent(paths.join(','))}`;
+            // 添加自定义路径
+            if (customPath && customPath !== '/') {
+                subscriptionUrl += \`&path=\${encodeURIComponent(customPath)}\`;
             }
-            if (prefixes.length > 0 && prefixes.some(p => p !== '')) {
-                subscriptionUrl += `&prefix=${encodeURIComponent(prefixes.join(','))}`;
+            // 添加节点前缀
+            if (nodePrefix) {
+                subscriptionUrl += \`&prefix=\${encodeURIComponent(nodePrefix)}\`;
             }
 
             let finalUrl = subscriptionUrl;
@@ -1571,7 +1571,6 @@ function generateHomePage(scuValue) {
                 }
             }
         }
-
     </script>
 </body>
 </html>`;

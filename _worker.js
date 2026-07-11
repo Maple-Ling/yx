@@ -256,7 +256,16 @@ async function fetchAndParseNewIPs(piu) {
 }
 
 // 生成VLESS链接
-function generateLinksFromSource(list, user, workerDomain, disableNonTLS = false, customPath = '/', echConfig = null, nodeNamePrefix = null) {
+function generateLinksFromSource(
+    list,
+    user,
+    workerDomain,
+    disableNonTLS = false,
+    customPath = '/',
+    echConfig = null,
+    nodeNamePrefix = null,
+    nodeCounter = { value: 1 }
+) {
     const CF_HTTP_PORTS = [80, 8080, 8880, 2052, 2082, 2086, 2095];
     const CF_HTTPS_PORTS = [443, 2053, 2083, 2087, 2096, 8443];
     const defaultHttpsPorts = [443];
@@ -296,9 +305,14 @@ function generateLinksFromSource(list, user, workerDomain, disableNonTLS = false
             defaultHttpPorts.forEach(port => { portsToGenerate.push({ port: port, tls: false }); });
         }
 
-        portsToGenerate.forEach(({ port, tls }, index) => {
-            // 如果使用了前缀，则在名称末尾加上序号
-            const finalNodeName = nodeNamePrefix ? `${nodeNameBase}-${index + 1}` : nodeNameBase;
+        portsToGenerate.forEach(({ port, tls }) => {
+
+            let finalNodeName = nodeNameBase;
+
+            if (nodeNamePrefix) {
+                const currentIndex = nodeCounter.value++;
+                finalNodeName = `${nodeNamePrefix}-${currentIndex}-${item.ip.includes(':') ? 'V6' : 'V4'}`;
+           }
 
             if (tls) {
                 const wsNodeName = `${finalNodeName}-${port}-WS-TLS`;
@@ -320,7 +334,16 @@ function generateLinksFromSource(list, user, workerDomain, disableNonTLS = false
 
 
 // 生成Trojan链接
-async function generateTrojanLinksFromSource(list, user, workerDomain, disableNonTLS = false, customPath = '/', echConfig = null, nodeNamePrefix = null) {
+async function generateTrojanLinksFromSource(
+    list,
+    user,
+    workerDomain,
+    disableNonTLS = false,
+    customPath = '/',
+    echConfig = null,
+    nodeNamePrefix = null,
+    nodeCounter = { value: 1 }
+) {
     const CF_HTTP_PORTS = [80, 8080, 8880, 2052, 2082, 2086, 2095];
     const CF_HTTPS_PORTS = [443, 2053, 2083, 2087, 2096, 8443];
     const defaultHttpsPorts = [443];
@@ -358,10 +381,14 @@ async function generateTrojanLinksFromSource(list, user, workerDomain, disableNo
             defaultHttpPorts.forEach(port => { portsToGenerate.push({ port: port, tls: false }); });
         }
 
-        portsToGenerate.forEach(({ port, tls }, index) => {
-            // 如果使用了前缀，则在名称末尾加上序号
-            const finalNodeName = nodeNamePrefix ? `${nodeNameBase}-${index + 1}` : nodeNameBase;
+        portsToGenerate.forEach(({ port, tls }) => {
 
+            let finalNodeName = nodeNameBase;
+
+            if (nodeNamePrefix) {
+                const currentIndex = nodeCounter.value++;
+                finalNodeName = `${nodeNamePrefix}-${currentIndex}-${item.ip.includes(':') ? 'V6' : 'V4'}`;
+            }
             if (tls) {
                 const wsNodeName = `${finalNodeName}-${port}-Trojan-WS-TLS`;
                 const wsParams = new URLSearchParams({ security: 'tls', sni: workerDomain, fp: 'chrome', type: 'ws', host: workerDomain, path: wsPath });
@@ -381,7 +408,16 @@ async function generateTrojanLinksFromSource(list, user, workerDomain, disableNo
 }
 
 // 生成VMess链接 (已修复中文名导致1101报错的问题)
-function generateVMessLinksFromSource(list, user, workerDomain, disableNonTLS = false, customPath = '/', echConfig = null, nodeNamePrefix = null) {
+function generateVMessLinksFromSource(
+    list,
+    user,
+    workerDomain,
+    disableNonTLS = false,
+    customPath = '/',
+    echConfig = null,
+    nodeNamePrefix = null,
+    nodeCounter = { value: 1 }
+) {
     const CF_HTTP_PORTS = [80, 8080, 8880, 2052, 2082, 2086, 2095];
     const CF_HTTPS_PORTS = [443, 2053, 2083, 2087, 2096, 8443];
     const defaultHttpsPorts = [443];
@@ -418,10 +454,14 @@ function generateVMessLinksFromSource(list, user, workerDomain, disableNonTLS = 
             defaultHttpPorts.forEach(port => { portsToGenerate.push({ port: port, tls: false }); });
         }
 
-        portsToGenerate.forEach(({ port, tls }, index) => {
-            // 如果使用了前缀，则在名称末尾加上序号
-            const finalNodeName = nodeNamePrefix ? `${nodeNameBase}-${index + 1}` : nodeNameBase;
+        portsToGenerate.forEach(({ port, tls }) => {
 
+            let finalNodeName = nodeNameBase;
+
+            if (nodeNamePrefix) {
+                const currentIndex = nodeCounter.value++;
+                finalNodeName = `${nodeNamePrefix}-${currentIndex}-${item.ip.includes(':') ? 'V6' : 'V4'}`;
+            }
             const vmessConfig = {
                 v: "2",
                 ps: tls ? `${finalNodeName}-${port}-VMess-WS-TLS` : `${finalNodeName}-${port}-VMess-WS`,
@@ -488,7 +528,7 @@ async function handleSubscriptionRequest(request, user, customDomain, piu, ipv4E
     const nodeDomain = customDomain || url.hostname;  // 用户输入的域名用于生成节点时的host/sni
     const target = url.searchParams.get('target') || 'base64';
     const wsPath = customPath || '/';
-
+    const nodeCounter = { value: 1 };
     async function addNodesFromList(list) {
         // 确保至少有一个协议被启用
         const hasProtocol = evEnabled || etEnabled || vmEnabled;
@@ -498,15 +538,43 @@ async function handleSubscriptionRequest(request, user, customDomain, piu, ipv4E
         const prefix = url.searchParams.get('prefix');
         
         if (useVL) {
-            finalLinks.push(...generateLinksFromSource(list, user, nodeDomain, disableNonTLS, wsPath, echConfig, prefix));
+            finalLinks.push(...generateLinksFromSource(
+                list,
+                user,
+                nodeDomain,
+                disableNonTLS,
+                wsPath,
+                echConfig,
+                prefix,
+                nodeCounter
+             ));
         }
+
         if (etEnabled) {
-            finalLinks.push(...await generateTrojanLinksFromSource(list, user, nodeDomain, disableNonTLS, wsPath, echConfig, prefix));
+            finalLinks.push(...await generateTrojanLinksFromSource(
+                list,
+                user,
+                nodeDomain,
+                disableNonTLS,
+                wsPath,
+                echConfig,
+                prefix,
+                nodeCounter
+            ));
         }
+
         if (vmEnabled) {
-            finalLinks.push(...generateVMessLinksFromSource(list, user, nodeDomain, disableNonTLS, wsPath, echConfig, prefix));
+            finalLinks.push(...generateVMessLinksFromSource(
+                list,
+                user,
+                nodeDomain,
+                disableNonTLS,
+                wsPath,
+                echConfig,
+                prefix,
+                nodeCounter
+            ));
         }
-    }
 
     // 原生地址
     const nativeList = [{ ip: workerDomain, isp: '原生地址' }];

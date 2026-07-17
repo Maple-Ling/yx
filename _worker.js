@@ -19,6 +19,7 @@ let customECHDomain = 'cloudflare-ech.com';
 
 // 默认优选域名列表
 const directDomains = [
+    { domain: "cfyx.maple521.ggff.net" },
     { name: "cloudflare.182682.xyz", domain: "cloudflare.182682.xyz" },
     { domain: "freeyx.cloudflare88.eu.org" },
     { domain: "bestcf.top" },

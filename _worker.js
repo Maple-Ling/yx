@@ -1,7 +1,3 @@
-// Cloudflare Worker - 简化版优选工具
-// 仅保留优选域名、优选IP、GitHub、上报和节点生成功能
-// 修复记录：已修正 VMess 协议下节点名称包含中文导致 Error 1101 的问题
-
 // 默认配置
 let customPreferredIPs = [];
 let customPreferredDomains = [];
@@ -9,8 +5,6 @@ let epd = true;  // 启用优选域名
 let epi = true;  // 启用优选IP
 let egi = true;  // 启用GitHub优选
 let ev = true;   // 启用VLESS协议
-let et = false;  // 启用Trojan协议
-let vm = false;  // 启用VMess协议
 let scu = 'https://url.v1.mk/sub';  // 订阅转换地址
 // ECH (Encrypted Client Hello)
 let enableECH = false;
@@ -19,7 +13,6 @@ let customECHDomain = 'cloudflare-ech.com';
 
 // 默认优选域名列表
 const directDomains = [
-    { domain: "cfyx.maple521.ggff.net" },
     { name: "cloudflare.182682.xyz", domain: "cloudflare.182682.xyz" },
     { domain: "freeyx.cloudflare88.eu.org" },
     { domain: "bestcf.top" },
@@ -34,7 +27,8 @@ const directDomains = [
 ];
 
 // 默认优选IP来源URL
-const defaultIPURL = 'https://raw.githubusercontent.com/qwer-search/bestip/refs/heads/main/kejilandbestip.txt';
+const defaultIPURL = 'https://raw.githubusercontent.com/qwer-search/bestip/refs/heads/main/kejilandbestip.txt';  // 优选IP的默认地址，不动
+const githubDefaultIPURL = 'https://ip.164746.xyz/ipTop10.html';  // GitHub优选的默认地址，新增
 
 // UUID验证
 function isValidUUID(str) {
@@ -333,164 +327,6 @@ function generateLinksFromSource(
     return links;
 }
 
-
-// 生成Trojan链接
-async function generateTrojanLinksFromSource(
-    list,
-    user,
-    workerDomain,
-    disableNonTLS = false,
-    customPath = '/',
-    echConfig = null,
-    nodeNamePrefix = null,
-    nodeCounter = { value: 1 }
-) {
-    const CF_HTTP_PORTS = [80, 8080, 8880, 2052, 2082, 2086, 2095];
-    const CF_HTTPS_PORTS = [443, 2053, 2083, 2087, 2096, 8443];
-    const defaultHttpsPorts = [443];
-    const defaultHttpPorts = disableNonTLS ? [] : [80];
-    const links = [];
-    const wsPath = customPath || '/';
-    const password = user;
-
-    list.forEach(item => {
-        // 核心修改：生成节点名称
-        let nodeNameBase = '';
-        if (nodeNamePrefix) {
-            nodeNameBase = nodeNamePrefix + '-' + (item.ip.includes(':') ? 'V6' : 'V4');
-        } else {
-            nodeNameBase = item.isp ? item.isp.replace(/\s/g, '_') : (item.name || item.domain || item.ip);
-            if (item.colo && item.colo.trim()) {
-                nodeNameBase = `${nodeNameBase}-${item.colo.trim()}`;
-            }
-        }
-
-        const safeIP = item.ip.includes(':') ? `[${item.ip}]` : item.ip;
-        let portsToGenerate = [];
-
-        if (item.port) {
-            const port = item.port;
-            if (CF_HTTPS_PORTS.includes(port)) {
-                portsToGenerate.push({ port: port, tls: true });
-            } else if (CF_HTTP_PORTS.includes(port)) {
-                if (!disableNonTLS) { portsToGenerate.push({ port: port, tls: false }); }
-            } else {
-                portsToGenerate.push({ port: port, tls: true });
-            }
-        } else {
-            defaultHttpsPorts.forEach(port => { portsToGenerate.push({ port: port, tls: true }); });
-            defaultHttpPorts.forEach(port => { portsToGenerate.push({ port: port, tls: false }); });
-        }
-
-        portsToGenerate.forEach(({ port, tls }) => {
-
-            let finalNodeName = nodeNameBase;
-
-            if (nodeNamePrefix) {
-                const currentIndex = nodeCounter.value++;
-                finalNodeName = `${nodeNamePrefix}-${currentIndex}-${item.ip.includes(':') ? 'V6' : 'V4'}`;
-            }
-            if (tls) {
-                const wsNodeName = `${finalNodeName}-${port}-Trojan-WS-TLS`;
-                const wsParams = new URLSearchParams({ security: 'tls', sni: workerDomain, fp: 'chrome', type: 'ws', host: workerDomain, path: wsPath });
-                if (echConfig) {
-                    wsParams.set('alpn', 'h3,h2,http/1.1');
-                    wsParams.set('ech', echConfig);
-                }
-                links.push(`trojan://${password}@${safeIP}:${port}?${wsParams.toString()}#${encodeURIComponent(wsNodeName)}`);
-            } else {
-                const wsNodeName = `${finalNodeName}-${port}-Trojan-WS`;
-                const wsParams = new URLSearchParams({ security: 'none', type: 'ws', host: workerDomain, path: wsPath });
-                links.push(`trojan://${password}@${safeIP}:${port}?${wsParams.toString()}#${encodeURIComponent(wsNodeName)}`);
-            }
-        });
-    });
-    return links;
-}
-
-// 生成VMess链接 (已修复中文名导致1101报错的问题)
-function generateVMessLinksFromSource(
-    list,
-    user,
-    workerDomain,
-    disableNonTLS = false,
-    customPath = '/',
-    echConfig = null,
-    nodeNamePrefix = null,
-    nodeCounter = { value: 1 }
-) {
-    const CF_HTTP_PORTS = [80, 8080, 8880, 2052, 2082, 2086, 2095];
-    const CF_HTTPS_PORTS = [443, 2053, 2083, 2087, 2096, 8443];
-    const defaultHttpsPorts = [443];
-    const defaultHttpPorts = disableNonTLS ? [] : [80];
-    const links = [];
-    const wsPath = customPath || '/';
-
-    list.forEach(item => {
-        // 核心修改：生成节点名称
-        let nodeNameBase = '';
-        if (nodeNamePrefix) {
-            nodeNameBase = nodeNamePrefix + '-' + (item.ip.includes(':') ? 'V6' : 'V4');
-        } else {
-            nodeNameBase = item.isp ? item.isp.replace(/\s/g, '_') : (item.name || item.domain || item.ip);
-            if (item.colo && item.colo.trim()) {
-                nodeNameBase = `${nodeNameBase}-${item.colo.trim()}`;
-            }
-        }
-
-        const safeIP = item.ip.includes(':') ? `[${item.ip}]` : item.ip;
-        let portsToGenerate = [];
-
-        if (item.port) {
-            const port = item.port;
-            if (CF_HTTPS_PORTS.includes(port)) {
-                portsToGenerate.push({ port: port, tls: true });
-            } else if (CF_HTTP_PORTS.includes(port)) {
-                if (!disableNonTLS) { portsToGenerate.push({ port: port, tls: false }); }
-            } else {
-                portsToGenerate.push({ port: port, tls: true });
-            }
-        } else {
-            defaultHttpsPorts.forEach(port => { portsToGenerate.push({ port: port, tls: true }); });
-            defaultHttpPorts.forEach(port => { portsToGenerate.push({ port: port, tls: false }); });
-        }
-
-        portsToGenerate.forEach(({ port, tls }) => {
-
-            let finalNodeName = nodeNameBase;
-
-            if (nodeNamePrefix) {
-                const currentIndex = nodeCounter.value++;
-                finalNodeName = `${nodeNamePrefix}-${currentIndex}-${item.ip.includes(':') ? 'V6' : 'V4'}`;
-            }
-            const vmessConfig = {
-                v: "2",
-                ps: tls ? `${finalNodeName}-${port}-VMess-WS-TLS` : `${finalNodeName}-${port}-VMess-WS`,
-                add: safeIP,
-                port: port.toString(),
-                id: user,
-                aid: "0",
-                scy: "auto",
-                net: "ws",
-                type: "none",
-                host: workerDomain,
-                path: wsPath,
-                tls: tls ? "tls" : "none"
-            };
-            if (tls) {
-                vmessConfig.sni = workerDomain;
-                vmessConfig.fp = "chrome";
-            }
-            const jsonStr = JSON.stringify(vmessConfig);
-            const vmessBase64 = btoa(encodeURIComponent(jsonStr).replace(/%([0-9A-F]{2})/g, function toSolidBytes(match, p1) {
-                return String.fromCharCode('0x' + p1);
-            }));
-            links.push(`vmess://${vmessBase64}`);
-        });
-    });
-    return links;
-}
-
 // 从GitHub IP生成链接（VLESS）
 function generateLinksFromNewIPs(list, user, workerDomain, customPath = '/', echConfig = null) {
     const CF_HTTP_PORTS = [80, 8080, 8880, 2052, 2082, 2086, 2095];
@@ -550,32 +386,6 @@ async function handleSubscriptionRequest(request, user, customDomain, piu, ipv4E
                 nodeCounter
              ));
         }
-
-        if (etEnabled) {
-            finalLinks.push(...await generateTrojanLinksFromSource(
-                list,
-                user,
-                nodeDomain,
-                disableNonTLS,
-                wsPath,
-                echConfig,
-                prefix,
-                nodeCounter
-            ));
-        }
-
-        if (vmEnabled) {
-            finalLinks.push(...generateVMessLinksFromSource(
-                list,
-                user,
-                nodeDomain,
-                disableNonTLS,
-                wsPath,
-                echConfig,
-                prefix,
-                nodeCounter
-            ));
-        }
     }
     // 原生地址
     const nativeList = [{ ip: workerDomain, isp: '原生地址' }];
@@ -607,9 +417,25 @@ async function handleSubscriptionRequest(request, user, customDomain, piu, ipv4E
                 // 从优选API获取IP列表
                 const 优选API的IP = await 请求优选API([piu]);
                 if (优选API的IP && 优选API的IP.length > 0) {
+                    // ===== 新增：展开逗号分隔的纯IP列表 =====
+                    const 展开后的IP = [];
+                    优选API的IP.forEach(原始地址 => {
+                        // 如果这一行包含逗号，且不包含冒号和#号，则认为是逗号分隔的纯IP列表
+                        if (原始地址.includes(',') && !原始地址.includes(':') && !原始地址.includes('#')) {
+                            原始地址.split(',').forEach(ip => {
+                                const trimmed = ip.trim();
+                                if (trimmed) {
+                                    展开后的IP.push(`${trimmed}:443#${trimmed}`);
+                                }
+                            });
+                        } else {
+                            展开后的IP.push(原始地址);
+                        }
+                    });
+                    // ===== 结束新增 =====
+
                     // 解析IP字符串格式：IP:端口#备注
-                    const IP列表 = 优选API的IP.map(原始地址 => {
-                        // 统一正则: 匹配 域名/IPv4/IPv6地址 + 可选端口 + 可选备注
+                    const IP列表 = 展开后的IP.map(原始地址 => {
                         const regex = /^(\[[\da-fA-F:]+\]|[\d.]+|[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?)*)(?::(\d+))?(?:#(.+))?$/;
                         const match = 原始地址.match(regex);
 
@@ -658,7 +484,23 @@ async function handleSubscriptionRequest(request, user, customDomain, piu, ipv4E
                 
                 // 解析所有IP并生成节点
                 if (优选IP.length > 0) {
-                    const IP列表 = 优选IP.map(原始地址 => {
+                    // ===== 新增：展开逗号分隔的纯IP列表 =====
+                    const 展开后的IP = [];
+                    优选IP.forEach(原始地址 => {
+                        if (原始地址.includes(',') && !原始地址.includes(':') && !原始地址.includes('#')) {
+                            原始地址.split(',').forEach(ip => {
+                                const trimmed = ip.trim();
+                                if (trimmed) {
+                                    展开后的IP.push(`${trimmed}:443#${trimmed}`);
+                                }
+                            });
+                        } else {
+                            展开后的IP.push(原始地址);
+                        }
+                    });
+                    // ===== 结束新增 =====
+
+                    const IP列表 = 展开后的IP.map(原始地址 => {
                         const regex = /^(\[[\da-fA-F:]+\]|[\d.]+|[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?)*)(?::(\d+))?(?:#(.+))?$/;
                         const match = 原始地址.match(regex);
 
@@ -1324,18 +1166,6 @@ function generateHomePage(scuValue) {
                         </div>
                         <div class="switch active" id="switchVL"></div>
                     </div>
-                    <div class="list-item" onclick="toggleSwitch('switchTJ')">
-                        <div>
-                            <div class="list-item-label">Trojan (tj)</div>
-                        </div>
-                        <div class="switch" id="switchTJ"></div>
-                    </div>
-                    <div class="list-item" onclick="toggleSwitch('switchVM')">
-                        <div>
-                            <div class="list-item-label">VMess (vm)</div>
-                        </div>
-                        <div class="switch" id="switchVM"></div>
-                    </div>
                 </div>
             </div>
             
@@ -1510,7 +1340,7 @@ function generateHomePage(scuValue) {
             
             // 检查至少选择一个协议
             if (!switches.switchVL && !switches.switchTJ && !switches.switchVM) {
-                alert('请至少选择一个协议（VLESS、Trojan或VMess）');
+                alert('请至少选择一个协议（VLESS）');
                 return;
             }
             
@@ -1729,7 +1559,7 @@ export default {
             epd = url.searchParams.get('epd') !== 'no';
             epi = url.searchParams.get('epi') !== 'no';
             egi = url.searchParams.get('egi') !== 'no';
-            const piu = url.searchParams.get('piu') || defaultIPURL;
+            const piu = url.searchParams.get('piu') || githubDefaultIPURL;
             
             // 协议选择
             const evEnabled = url.searchParams.get('ev') === 'yes' || (url.searchParams.get('ev') === null && ev);

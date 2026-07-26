@@ -425,6 +425,7 @@ async function handleSubscriptionRequest(request, user, customDomain, piu, ipv4E
 
     // GitHub优选 / 优选API
     if (egi) {
+      const prefix = url.searchParams.get('prefix');
         try {
             // 检查是否是优选API URL（以https://开头）
             if (piu && piu.toLowerCase().startsWith('https://')) {
@@ -472,7 +473,7 @@ async function handleSubscriptionRequest(request, user, customDomain, piu, ipv4E
                         
                         if (useVL) {
     const sourceList = IP列表.map(item => ({ ip: item.ip, isp: item.name }));
-    finalLinks.push(...generateLinksFromSource(sourceList, user, nodeDomain, disableNonTLS, wsPath, echConfig, null, { value: 1 }));
+    finalLinks.push(...generateLinksFromSource(sourceList, user, nodeDomain, disableNonTLS, wsPath, echConfig, prefix, nodeCounter));
 }
 
                     }
@@ -539,7 +540,7 @@ async function handleSubscriptionRequest(request, user, customDomain, piu, ipv4E
                         
                         if (useVL) {
     const sourceList = IP列表.map(item => ({ ip: item.ip, isp: item.name }));
-    finalLinks.push(...generateLinksFromSource(sourceList, user, nodeDomain, disableNonTLS, wsPath, echConfig, null, { value: 1 }));
+    finalLinks.push(...generateLinksFromSource(sourceList, user, nodeDomain, disableNonTLS, wsPath, echConfig, prefix, nodeCounter));
 }
                     }
                 }

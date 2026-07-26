@@ -13,6 +13,7 @@ let customECHDomain = 'cloudflare-ech.com';
 
 // 默认优选域名列表
 const directDomains = [
+    { domain: "cfyx.maple521.ggff.net" },
     { name: "cloudflare.182682.xyz", domain: "cloudflare.182682.xyz" },
     { domain: "freeyx.cloudflare88.eu.org" },
     { domain: "bestcf.top" },
@@ -27,8 +28,8 @@ const directDomains = [
 ];
 
 // 默认优选IP来源URL
-const defaultIPURL = 'https://raw.githubusercontent.com/qwer-search/bestip/refs/heads/main/kejilandbestip.txt';  // 优选IP的默认地址，不动
-const githubDefaultIPURL = 'https://ip.164746.xyz/ipTop10.html';  // GitHub优选的默认地址，新增
+const defaultIPURL = 'https://raw.githubusercontent.com/qwer-search/bestip/refs/heads/main/kejilandbestip.txt';
+const githubDefaultIPURL = 'https://ip.164746.xyz/ipTop10.html';
 
 // UUID验证
 function isValidUUID(str) {
@@ -177,20 +178,33 @@ async function 请求优选API(urls, 默认端口 = '443', 超时时间 = 3000) 
             const isCSV = lines.length > 1 && lines[0].includes(',');
             const IPV6_PATTERN = /^[^\[\]]*:[^\[\]]*:[^\[\]]/;
             if (!isCSV) {
-                lines.forEach(line => {
-                    const hashIndex = line.indexOf('#');
-                    const [hostPart, remark] = hashIndex > -1 ? [line.substring(0, hashIndex), line.substring(hashIndex)] : [line, ''];
-                    let hasPort = false;
-                    if (hostPart.startsWith('[')) {
-                        hasPort = /\]:(\d+)$/.test(hostPart);
-                    } else {
-                        const colonIndex = hostPart.lastIndexOf(':');
-                        hasPort = colonIndex > -1 && /^\d+$/.test(hostPart.substring(colonIndex + 1));
-                    }
+    lines.forEach(line => {
+        // ===== 新增：处理逗号分隔的纯IP列表（一行内多个IP，无端口无备注） =====
+        if (line.includes(',') && !line.includes(':') && !line.includes('#')) {
+            line.split(',').forEach(ip => {
+                const trimmed = ip.trim();
+                if (trimmed) {
                     const port = new URL(url).searchParams.get('port') || 默认端口;
-                    results.add(hasPort ? line : `${hostPart}:${port}${remark}`);
-                });
+                    results.add(`${trimmed}:${port}#${trimmed}`);
+                }
+            });
+        } else {
+            // 原有的单行处理逻辑
+            const hashIndex = line.indexOf('#');
+            const [hostPart, remark] = hashIndex > -1 ? [line.substring(0, hashIndex), line.substring(hashIndex)] : [line, ''];
+            let hasPort = false;
+            if (hostPart.startsWith('[')) {
+                hasPort = /\]:(\d+)$/.test(hostPart);
             } else {
+                const colonIndex = hostPart.lastIndexOf(':');
+                hasPort = colonIndex > -1 && /^\d+$/.test(hostPart.substring(colonIndex + 1));
+            }
+            const port = new URL(url).searchParams.get('port') || 默认端口;
+            results.add(hasPort ? line : `${hostPart}:${port}${remark}`);
+        }
+    });
+}
+ else {
                 const headers = lines[0].split(',').map(h => h.trim());
                 const dataLines = lines.slice(1);
                 if (headers.includes('IP地址') && headers.includes('端口') && headers.includes('数据中心')) {
@@ -457,8 +471,10 @@ async function handleSubscriptionRequest(request, user, customDomain, piu, ipv4E
                         const useVL = hasProtocol ? evEnabled : true;
                         
                         if (useVL) {
-                            finalLinks.push(...generateLinksFromNewIPs(IP列表, user, nodeDomain, wsPath, echConfig));
-                        }
+    const sourceList = IP列表.map(item => ({ ip: item.ip, isp: item.name }));
+    finalLinks.push(...generateLinksFromSource(sourceList, user, nodeDomain, disableNonTLS, wsPath, echConfig, null, { value: 1 }));
+}
+
                     }
                 }
             } else if (piu && piu.includes('\n')) {
@@ -522,8 +538,9 @@ async function handleSubscriptionRequest(request, user, customDomain, piu, ipv4E
                         const useVL = hasProtocol ? evEnabled : true;
                         
                         if (useVL) {
-                            finalLinks.push(...generateLinksFromNewIPs(IP列表, user, nodeDomain, wsPath, echConfig));
-                        }
+    const sourceList = IP列表.map(item => ({ ip: item.ip, isp: item.name }));
+    finalLinks.push(...generateLinksFromSource(sourceList, user, nodeDomain, disableNonTLS, wsPath, echConfig, null, { value: 1 }));
+}
                     }
                 }
             } else {

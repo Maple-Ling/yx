@@ -1,9 +1,5 @@
 // 默认配置
-let customPreferredIPs = [];
-let customPreferredDomains = [];
-let epd = true;  // 启用优选域名
-let epi = true;  // 启用优选IP
-let egi = true;  // 启用GitHub优选
+let egi = true;  // 启用「自建优选源」（唯一数据来源）
 let ev = true;   // 启用VLESS协议
 let scu = 'https://url.v1.mk/sub';  // 订阅转换地址
 // ECH (Encrypted Client Hello)
@@ -11,25 +7,8 @@ let enableECH = false;
 let customDNS = 'https://dns.joeyblog.eu.org/joeyblog';
 let customECHDomain = 'cloudflare-ech.com';
 
-// 默认优选域名列表
-const directDomains = [
-    { domain: "cfyx.maple521.ggff.net" },
-    { name: "cloudflare.182682.xyz", domain: "cloudflare.182682.xyz" },
-    { domain: "freeyx.cloudflare88.eu.org" },
-    { domain: "bestcf.top" },
-    { domain: "cdn.2020111.xyz" },
-    { domain: "cf.0sm.com" },
-    { domain: "cf.090227.xyz" },
-    { domain: "cf.zhetengsha.eu.org" },
-    { domain: "cfip.1323123.xyz" },
-    { domain: "cloudflare-ip.mofashi.ltd" },
-    { domain: "cf.877771.xyz" },
-    { domain: "xn--b6gac.eu.org" }
-];
-
-// 默认优选IP来源URL
-const defaultIPURL = 'https://raw.githubusercontent.com/qwer-search/bestip/refs/heads/main/kejilandbestip.txt';
-const githubDefaultIPURL = 'https://ip.164746.xyz/ipTop10.html';
+// 唯一的优选 IP 来源：自建数据 Worker
+const githubDefaultIPURL = 'https://speedtest.maple521.cc.cd/api/best';
 
 // UUID验证
 function isValidUUID(str) {
@@ -40,74 +19,6 @@ function isValidUUID(str) {
 // 从环境变量获取配置
 function getConfigValue(key, defaultValue) {
     return defaultValue || '';
-}
-
-// 获取动态IP列表（支持IPv4/IPv6和运营商筛选）
-async function fetchDynamicIPs(ipv4Enabled = true, ipv6Enabled = true, ispMobile = true, ispUnicom = true, ispTelecom = true) {
-    const v4Url = "https://www.wetest.vip/page/cloudflare/address_v4.html";
-    const v6Url = "https://www.wetest.vip/page/cloudflare/address_v6.html";
-    let results = [];
-
-    try {
-        const fetchPromises = [];
-        if (ipv4Enabled) {
-            fetchPromises.push(fetchAndParseWetest(v4Url));
-        } else {
-            fetchPromises.push(Promise.resolve([]));
-        }
-        if (ipv6Enabled) {
-            fetchPromises.push(fetchAndParseWetest(v6Url));
-        } else {
-            fetchPromises.push(Promise.resolve([]));
-        }
-
-        const [ipv4List, ipv6List] = await Promise.all(fetchPromises);
-        results = [...ipv4List, ...ipv6List];
-        
-        // 按运营商筛选
-        if (results.length > 0) {
-            results = results.filter(item => {
-                const isp = item.isp || '';
-                if (isp.includes('移动') && !ispMobile) return false;
-                if (isp.includes('联通') && !ispUnicom) return false;
-                if (isp.includes('电信') && !ispTelecom) return false;
-                return true;
-            });
-        }
-        
-        return results.length > 0 ? results : [];
-    } catch (e) {
-        return [];
-    }
-}
-
-// 解析wetest页面
-async function fetchAndParseWetest(url) {
-    try {
-        const response = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0' } });
-        if (!response.ok) return [];
-        const html = await response.text();
-        const results = [];
-        const rowRegex = /<tr[\s\S]*?<\/tr>/g;
-        const cellRegex = /<td data-label="线路名称">(.+?)<\/td>[\s\S]*?<td data-label="优选地址">([\d.:a-fA-F]+)<\/td>[\s\S]*?<td data-label="数据中心">(.+?)<\/td>/;
-
-        let match;
-        while ((match = rowRegex.exec(html)) !== null) {
-            const rowHtml = match[0];
-            const cellMatch = rowHtml.match(cellRegex);
-            if (cellMatch && cellMatch[1] && cellMatch[2]) {
-                const colo = cellMatch[3] ? cellMatch[3].trim().replace(/<.*?>/g, '') : '';
-                results.push({
-                    isp: cellMatch[1].trim().replace(/<.*?>/g, ''),
-                    ip: cellMatch[2].trim(),
-                    colo: colo
-                });
-            }
-        }
-        return results;
-    } catch (error) {
-        return [];
-    }
 }
 
 // 整理成数组
@@ -237,7 +148,7 @@ async function 请求优选API(urls, 默认端口 = '443', 超时时间 = 3000) 
 
 // 从GitHub获取优选IP（保留原有功能，同时支持优选API）
 async function fetchAndParseNewIPs(piu) {
-    const url = piu || defaultIPURL;
+    const url = piu;
     try {
         const response = await fetch(url);
         if (!response.ok) return [];
@@ -372,7 +283,7 @@ function generateLinksFromNewIPs(list, user, workerDomain, customPath = '/', ech
 }
 
 // 生成订阅内容
-async function handleSubscriptionRequest(request, user, customDomain, piu, ipv4Enabled, ipv6Enabled, ispMobile, ispUnicom, ispTelecom, evEnabled, etEnabled, vmEnabled, disableNonTLS, customPath, echConfig = null) {
+async function handleSubscriptionRequest(request, user, customDomain, piu, ipv4Enabled, ipv6Enabled, ispMobile, ispUnicom, ispTelecom, evEnabled, etEnabled, vmEnabled, disableNonTLS, customPath, echConfig = null, egiEnabled = egi) {
     const url = new URL(request.url);
     const finalLinks = [];
     const workerDomain = url.hostname;  // workerDomain始终是请求的hostname
@@ -401,30 +312,14 @@ async function handleSubscriptionRequest(request, user, customDomain, piu, ipv4E
              ));
         }
     }
-    // 原生地址
-    const nativeList = [{ ip: workerDomain, isp: '原生地址' }];
-    await addNodesFromList(nativeList);
+    // 原生地址：已移除。
+    // 本 Worker 只负责组装订阅、不代理流量，指向自身的「原生地址」节点必然连不通，
+    // 留它只会往订阅里塞无效节点。
+    // const nativeList = [{ ip: workerDomain, isp: '原生地址' }];
+    // await addNodesFromList(nativeList);
 
-    // 优选域名
-    if (epd) {
-        const domainList = directDomains.map(d => ({ ip: d.domain, isp: d.name || d.domain }));
-        await addNodesFromList(domainList);
-    }
-
-    // 优选IP
-    if (epi) {
-        try {
-            const dynamicIPList = await fetchDynamicIPs(ipv4Enabled, ipv6Enabled, ispMobile, ispUnicom, ispTelecom);
-            if (dynamicIPList.length > 0) {
-                await addNodesFromList(dynamicIPList);
-            }
-        } catch (error) {
-            console.error('获取动态IP失败:', error);
-        }
-    }
-
-    // GitHub优选 / 优选API
-    if (egi) {
+    // 自建优选源（来自数据 Worker 的 /api/best）
+    if (egiEnabled) {
       const prefix = url.searchParams.get('prefix');
         try {
             // 检查是否是优选API URL（以https://开头）
@@ -1148,44 +1043,10 @@ function generateHomePage(scuValue) {
                 <small style="display: block; margin-top: 6px; color: #86868b; font-size: 13px;">自定义节点名称前缀，留空则使用默认规则</small>
             </div>
 
-            <div class="list-item" onclick="toggleSwitch('switchDomain')">
-                <div>
-                    <div class="list-item-label">启用优选域名</div>
-                </div>
-                <div class="switch active" id="switchDomain"></div>
-            </div>
             
-            <div class="list-item" onclick="toggleSwitch('switchIP')">
-                <div>
-                    <div class="list-item-label">启用优选IP</div>
-                </div>
-                <div class="switch active" id="switchIP"></div>
-            </div>
             
-            <div class="list-item" onclick="toggleSwitch('switchGitHub')">
-                <div>
-                    <div class="list-item-label">启用GitHub优选</div>
-                </div>
-                <div class="switch active" id="switchGitHub"></div>
-            </div>
             
-            <div class="form-group" id="githubUrlGroup" style="margin-top: 12px;">
-                <label>GitHub优选URL（可选）</label>
-                <input type="text" id="githubUrl" placeholder="留空则使用默认地址" style="font-size: 15px;">
-                <small style="display: block; margin-top: 6px; color: #86868b; font-size: 13px;">自定义优选IP列表来源URL，留空则使用默认地址</small>
-            </div>
             
-            <div class="form-group" style="margin-top: 24px;">
-                <label>协议选择</label>
-                <div style="margin-top: 8px;">
-                    <div class="list-item" onclick="toggleSwitch('switchVL')">
-                        <div>
-                            <div class="list-item-label">VLESS (vl)</div>
-                        </div>
-                        <div class="switch active" id="switchVL"></div>
-                    </div>
-                </div>
-            </div>
             
             <div class="form-group" style="margin-top: 24px;">
                 <label>客户端选择</label>
@@ -1204,37 +1065,7 @@ function generateHomePage(scuValue) {
                 <div class="result-url" id="clientSubscriptionUrl" style="display: none; margin-top: 12px; padding: 12px; background: rgba(0, 122, 255, 0.1); border-radius: 8px; font-size: 13px; color: #007aff; word-break: break-all;"></div>
             </div>
             
-            <div class="form-group">
-                <label>IP版本选择</label>
-                <div style="display: flex; gap: 16px; margin-top: 8px;">
-                    <label class="checkbox-label">
-                        <input type="checkbox" id="ipv4Enabled" checked>
-                        <span>IPv4</span>
-                    </label>
-                    <label class="checkbox-label">
-                        <input type="checkbox" id="ipv6Enabled" checked>
-                        <span>IPv6</span>
-                    </label>
-                </div>
-            </div>
             
-            <div class="form-group">
-                <label>运营商选择</label>
-                <div style="display: flex; gap: 16px; flex-wrap: wrap; margin-top: 8px;">
-                    <label class="checkbox-label">
-                        <input type="checkbox" id="ispMobile" checked>
-                        <span>移动</span>
-                    </label>
-                    <label class="checkbox-label">
-                        <input type="checkbox" id="ispUnicom" checked>
-                        <span>联通</span>
-                    </label>
-                    <label class="checkbox-label">
-                        <input type="checkbox" id="ispTelecom" checked>
-                        <span>电信</span>
-                    </label>
-                </div>
-            </div>
             
             <div class="list-item" onclick="toggleSwitch('switchTLS')" style="margin-top: 8px;">
                 <div>
@@ -1271,8 +1102,8 @@ function generateHomePage(scuValue) {
     
     <script>
         let switches = {
-            switchDomain: true,
-            switchIP: true,
+            switchDomain: false,
+            switchIP: false,
             switchGitHub: true,
             switchVL: true,
             switchTJ: false,
@@ -1356,42 +1187,18 @@ function generateHomePage(scuValue) {
                 return;
             }
             
-            // 检查至少选择一个协议
-            if (!switches.switchVL && !switches.switchTJ && !switches.switchVM) {
-                alert('请至少选择一个协议（VLESS）');
-                return;
-            }
             
-            const ipv4Enabled = document.getElementById('ipv4Enabled').checked;
-            const ipv6Enabled = document.getElementById('ipv6Enabled').checked;
-            const ispMobile = document.getElementById('ispMobile').checked;
-            const ispUnicom = document.getElementById('ispUnicom').checked;
-            const ispTelecom = document.getElementById('ispTelecom').checked;
             
-            const githubUrl = document.getElementById('githubUrl').value.trim();
             
             const currentUrl = new URL(window.location.href);
             const baseUrl = currentUrl.origin;
-            let subscriptionUrl = \`\${baseUrl}/\${uuid}/sub?domain=\${encodeURIComponent(domain)}&epd=\${switches.switchDomain ? 'yes' : 'no'}&epi=\${switches.switchIP ? 'yes' : 'no'}&egi=\${switches.switchGitHub ? 'yes' : 'no'}\`;
+            let subscriptionUrl = \`\${baseUrl}/\${uuid}/sub?domain=\${encodeURIComponent(domain)}\`;
             
-            // 添加GitHub优选URL
-            if (githubUrl) {
-                subscriptionUrl += \`&piu=\${encodeURIComponent(githubUrl)}\`;
-            }
             
-            // 添加协议选择
-            if (switches.switchVL) subscriptionUrl += '&ev=yes';
-            if (switches.switchTJ) subscriptionUrl += '&et=yes';
-            if (switches.switchVM) subscriptionUrl += '&mess=yes';
             
-            if (!ipv4Enabled) subscriptionUrl += '&ipv4=no';
-            if (!ipv6Enabled) subscriptionUrl += '&ipv6=no';
-            if (!ispMobile) subscriptionUrl += '&ispMobile=no';
-            if (!ispUnicom) subscriptionUrl += '&ispUnicom=no';
-            if (!ispTelecom) subscriptionUrl += '&ispTelecom=no';
             
             // 添加TLS控制（ECH 开启时也会在服务端强制仅 TLS）
-            if (switches.switchTLS) subscriptionUrl += '&dkby=yes';
+            if (switches.switchTLS) subscriptionUrl += '&dkby=yes';  // 打开该开关则只生成 443 节点（默认两种都生成）
             if (switches.switchECH) {
                 subscriptionUrl += '&ech=yes';
                 const dnsVal = document.getElementById('customDNS') && document.getElementById('customDNS').value.trim();
@@ -1573,10 +1380,9 @@ export default {
                 return new Response('缺少域名参数', { status: 400 });
             }
             
-            // 从URL参数获取配置
-            epd = url.searchParams.get('epd') !== 'no';
-            epi = url.searchParams.get('epi') !== 'no';
-            egi = url.searchParams.get('egi') !== 'no';
+            // 从URL参数获取配置（不污染全局：参数缺省时沿用默认值）
+            const _egi = url.searchParams.get('egi');
+            const egiEnabled = _egi === null ? egi : _egi !== 'no';
             const piu = url.searchParams.get('piu') || githubDefaultIPURL;
             
             // 协议选择
@@ -1586,7 +1392,7 @@ export default {
             
             // IPv4/IPv6选择
             const ipv4Enabled = url.searchParams.get('ipv4') !== 'no';
-            const ipv6Enabled = url.searchParams.get('ipv6') !== 'no';
+            const ipv6Enabled = url.searchParams.get('ipv6') === 'yes';
             
             // 运营商选择
             const ispMobile = url.searchParams.get('ispMobile') !== 'no';
@@ -1594,7 +1400,7 @@ export default {
             const ispTelecom = url.searchParams.get('ispTelecom') !== 'no';
             
             // TLS控制（ECH 开启时强制仅 TLS）
-            let disableNonTLS = url.searchParams.get('dkby') === 'yes';
+            let disableNonTLS = url.searchParams.get('dkby') === 'yes';  // 默认同时生成 443 + 80 两条；传 dkby=yes 则只留 443
             const echParam = url.searchParams.get('ech');
             const echEnabled = echParam === 'yes' || (echParam === null && enableECH);
             if (echEnabled) disableNonTLS = true;
@@ -1605,7 +1411,7 @@ export default {
             // 自定义路径
             const customPath = url.searchParams.get('path') || '/';
 
-            return await handleSubscriptionRequest(request, uuid, domain, piu, ipv4Enabled, ipv6Enabled, ispMobile, ispUnicom, ispTelecom, evEnabled, etEnabled, vmEnabled, disableNonTLS, customPath, echConfig);
+            return await handleSubscriptionRequest(request, uuid, domain, piu, ipv4Enabled, ipv6Enabled, ispMobile, ispUnicom, ispTelecom, evEnabled, etEnabled, vmEnabled, disableNonTLS, customPath, echConfig, egiEnabled);
         }
         
         return new Response('Not Found', { status: 404 });

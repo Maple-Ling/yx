@@ -1,7 +1,6 @@
 // 默认配置
 let egi = true;  // 启用「自建优选源」（唯一数据来源）
 let ev = true;   // 启用VLESS协议
-let scu = 'https://url.v1.mk/sub';  // 订阅转换地址
 // ECH (Encrypted Client Hello)
 let enableECH = false;
 let customDNS = 'https://dns.joeyblog.eu.org/joeyblog';
@@ -481,6 +480,12 @@ async function handleSubscriptionRequest(request, user, customDomain, piu, ipv4E
         case 'quanx':
             subscriptionContent = generateQuantumultConfig(finalLinks);
             break;
+        case 'singbox':
+        case 'sing-box':
+        case 'sing_box':
+            subscriptionContent = generateSingBoxConfig(finalLinks);
+            contentType = 'application/json; charset=utf-8';
+            break;
         default:
             subscriptionContent = btoa(finalLinks.join('\n'));
     }
@@ -552,12 +557,20 @@ function generateClashConfig(links) {
 
 // 生成Surge配置
 function generateSurgeConfig(links) {
-    let config = '[Proxy]\n';
+    let config = '[General]\n';
+    config += 'loglevel = notify\n';
+    config += 'dns-server = 223.5.5.5, 119.29.29.29\n\n';
+    config += '[Proxy]\n';
     links.forEach(link => {
         const name = decodeURIComponent(link.split('#')[1] || '节点');
         config += `${name} = vless, ${link.match(/@([^:]+):(\d+)/)?.[1] || ''}, ${link.match(/@[^:]+:(\d+)/)?.[1] || '443'}, username=${link.match(/vless:\/\/([^@]+)@/)?.[1] || ''}, tls=${link.includes('security=tls')}, ws=true, ws-path=${link.match(/path=([^&#]+)/)?.[1] || '/'}, ws-headers=Host:${link.match(/host=([^&#]+)/)?.[1] || ''}\n`;
     });
     config += '\n[Proxy Group]\nPROXY = select, ' + links.map((_, i) => decodeURIComponent(links[i].split('#')[1] || `节点${i + 1}`)).join(', ') + '\n';
+    config += '\n[Rule]\n';
+    config += 'DOMAIN-SUFFIX,local,DIRECT\n';
+    config += 'IP-CIDR,127.0.0.0/8,DIRECT\n';
+    config += 'GEOIP,CN,DIRECT\n';
+    config += 'FINAL,PROXY\n';
     return config;
 }
 
@@ -566,9 +579,70 @@ function generateQuantumultConfig(links) {
     return btoa(links.join('\n'));
 }
 
+// 生成sing-box配置（outbounds + selector）
+function generateSingBoxConfig(links) {
+    const outbounds = [];
+    const tags = [];
+    links.forEach((link, index) => {
+        const name = decodeURIComponent(link.split('#')[1] || `节点${index + 1}`);
+        const server = link.match(/@([^:]+):(\d+)/)?.[1] || '';
+        const port = parseInt(link.match(/@[^:]+:(\d+)/)?.[1] || '443', 10);
+        const uuid = link.match(/vless:\/\/([^@]+)@/)?.[1] || '';
+        const tls = link.includes('security=tls');
+        const path = decodeURIComponent(link.match(/[?&]path=([^&#]+)/)?.[1] || '/');
+        const host = decodeURIComponent(link.match(/[?&]host=([^&#]+)/)?.[1] || '');
+        const sni = decodeURIComponent(link.match(/[?&]sni=([^&#]+)/)?.[1] || '');
+        const fp = link.match(/[?&]fp=([^&#]+)/)?.[1] || 'chrome';
+
+        tags.push(name);
+        const ob = {
+            type: 'vless',
+            tag: name,
+            server: server,
+            server_port: port,
+            uuid: uuid,
+            transport: {
+                type: 'ws',
+                path: path,
+                headers: host ? { Host: host } : {}
+            }
+        };
+        if (tls) {
+            ob.tls = {
+                enabled: true,
+                server_name: sni || host || server,
+                utls: { enabled: true, fingerprint: fp }
+            };
+        }
+        outbounds.push(ob);
+    });
+    const config = {
+        log: { level: 'info' },
+        inbounds: [
+            {
+                type: 'mixed',
+                tag: 'mixed-in',
+                listen: '127.0.0.1',
+                listen_port: 2080
+            }
+        ],
+        outbounds: [
+            ...outbounds,
+            { type: 'selector', tag: 'PROXY', outbounds: tags, default: tags[0] || 'DIRECT' },
+            { type: 'direct', tag: 'DIRECT' }
+        ],
+        route: {
+            rules: [
+                { ip_is_private: true, outbound: 'DIRECT' }
+            ],
+            final: 'PROXY'
+        }
+    };
+    return JSON.stringify(config, null, 2);
+}
+
 // 生成iOS 26风格的主页
-function generateHomePage(scuValue) {
-    const scu = scuValue || 'https://url.v1.mk/sub';
+function generateHomePage() {
     return `<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -1127,10 +1201,6 @@ function generateHomePage(scuValue) {
             }
         }
         
-        
-        // 订阅转换地址（从服务器注入）
-        const SUB_CONVERTER_URL = "${ scu }";
-        
         function tryOpenApp(schemeUrl, fallbackCallback, timeout) {
             timeout = timeout || 2500;
             let appOpened = false;
@@ -1253,8 +1323,15 @@ function generateHomePage(scuValue) {
                     });
                 }
             } else {
-                const encodedUrl = encodeURIComponent(subscriptionUrl);
-                finalUrl = SUB_CONVERTER_URL + '?target=' + clientType + '&url=' + encodedUrl + '&insert=false&emoji=true&list=false&xudp=false&udp=false&tfo=false&expand=true&scv=false&fdn=false&new_name=true';
+                // 直连自己的 Worker，不再经过第三方订阅转换服务
+                const TARGET_MAP = {
+                    'clash': 'clash',
+                    'surge': 'surge',
+                    'quanx': 'quantumult',
+                    'sing-box': 'singbox'
+                };
+                const _t = TARGET_MAP[clientType] || '';
+                finalUrl = _t ? (subscriptionUrl + '&target=' + _t) : subscriptionUrl;
                 
                 const urlElement = document.getElementById('clientSubscriptionUrl');
                 urlElement.textContent = finalUrl;
@@ -1308,8 +1385,7 @@ export default {
         
         // 主页
         if (path === '/' || path === '') {
-            const scuValue = env?.scu || scu;
-            return new Response(generateHomePage(scuValue), {
+            return new Response(generateHomePage(), {
                 headers: { 'Content-Type': 'text/html; charset=utf-8' }
             });
         }

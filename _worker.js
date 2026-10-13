@@ -470,6 +470,12 @@ async function handleSubscriptionRequest(request, user, customDomain, piu, ipv4E
             subscriptionContent = generateClashConfig(finalLinks);
             contentType = 'text/yaml; charset=utf-8';
             break;
+        case 'provider':
+        case 'clash-provider':
+        case 'clash_provider':
+            subscriptionContent = generateClashProvider(finalLinks);
+            contentType = 'text/yaml; charset=utf-8';
+            break;
         case 'surge':
         case 'surge2':
         case 'surge3':
@@ -515,25 +521,26 @@ function generateClashConfig(links) {
         const port = link.match(/@[^:]+:(\d+)/)?.[1] || '443';
         const uuid = link.match(/vless:\/\/([^@]+)@/)?.[1] || '';
         const tls = link.includes('security=tls');
-        const path = link.match(/path=([^&#]+)/)?.[1] || '/';
-        const host = link.match(/host=([^&#]+)/)?.[1] || '';
-        const sni = link.match(/sni=([^&#]+)/)?.[1] || '';
+        const path = decodeURIComponent(link.match(/[?&]path=([^&#]+)/)?.[1] || '/');
+        const host = decodeURIComponent(link.match(/[?&]host=([^&#]+)/)?.[1] || '');
+        const sni = decodeURIComponent(link.match(/[?&]sni=([^&#]+)/)?.[1] || '');
         const echParam = link.match(/[?&]ech=([^&#]+)/)?.[1];
         const echDomain = echParam ? decodeURIComponent(echParam).split('+')[0] : '';
         
-        yaml += `  - name: ${name}\n`;
+        const q = (v) => '"' + String(v == null ? '' : v).replace(/\\/g, '\\\\').replace(/"/g, '\\"') + '"';
+        yaml += `  - name: ${q(name)}\n`;
         yaml += `    type: vless\n`;
-        yaml += `    server: ${server}\n`;
+        yaml += `    server: ${q(server)}\n`;
         yaml += `    port: ${port}\n`;
-        yaml += `    uuid: ${uuid}\n`;
+        yaml += `    uuid: ${q(uuid)}\n`;
         yaml += `    tls: ${tls}\n`;
         yaml += `    network: ws\n`;
         yaml += `    ws-opts:\n`;
-        yaml += `      path: ${path}\n`;
+        yaml += `      path: ${q(path)}\n`;
         yaml += `      headers:\n`;
-        yaml += `        Host: ${host}\n`;
+        yaml += `        Host: ${q(host)}\n`;
         if (sni) {
-            yaml += `    servername: ${sni}\n`;
+            yaml += `    servername: ${q(sni)}\n`;
         }
         if (echDomain) {
             yaml += `    ech-opts:\n`;
@@ -555,6 +562,36 @@ function generateClashConfig(links) {
     return yaml;
 }
 
+// 生成 Clash provider（仅 proxies 段，供 mihomo 的 proxy-providers 使用）
+function generateClashProvider(links) {
+    const q = (v) => '"' + String(v == null ? '' : v).replace(/\\/g, '\\\\').replace(/"/g, '\\"') + '"';
+    let yaml = 'proxies:\n';
+    links.forEach((link) => {
+        const name = decodeURIComponent(link.split('#')[1] || '节点');
+        const server = link.match(/@([^:]+):(\d+)/)?.[1] || '';
+        const port = link.match(/@[^:]+:(\d+)/)?.[1] || '443';
+        const uuid = link.match(/vless:\/\/([^@]+)@/)?.[1] || '';
+        const tls = link.includes('security=tls');
+        const path = decodeURIComponent(link.match(/[?&]path=([^&#]+)/)?.[1] || '/');
+        const host = decodeURIComponent(link.match(/[?&]host=([^&#]+)/)?.[1] || '');
+        const sni = decodeURIComponent(link.match(/[?&]sni=([^&#]+)/)?.[1] || '');
+        yaml += `  - name: ${q(name)}\n`;
+        yaml += `    type: vless\n`;
+        yaml += `    server: ${q(server)}\n`;
+        yaml += `    port: ${port}\n`;
+        yaml += `    uuid: ${q(uuid)}\n`;
+        yaml += `    tls: ${tls}\n`;
+        yaml += `    network: ws\n`;
+        yaml += `    udp: true\n`;
+        yaml += `    ws-opts:\n`;
+        yaml += `      path: ${q(path)}\n`;
+        yaml += `      headers:\n`;
+        yaml += `        Host: ${q(host)}\n`;
+        if (sni) yaml += `    servername: ${q(sni)}\n`;
+    });
+    return yaml;
+}
+
 // 生成Surge配置
 function generateSurgeConfig(links) {
     let config = '[General]\n';
@@ -563,7 +600,9 @@ function generateSurgeConfig(links) {
     config += '[Proxy]\n';
     links.forEach(link => {
         const name = decodeURIComponent(link.split('#')[1] || '节点');
-        config += `${name} = vless, ${link.match(/@([^:]+):(\d+)/)?.[1] || ''}, ${link.match(/@[^:]+:(\d+)/)?.[1] || '443'}, username=${link.match(/vless:\/\/([^@]+)@/)?.[1] || ''}, tls=${link.includes('security=tls')}, ws=true, ws-path=${link.match(/path=([^&#]+)/)?.[1] || '/'}, ws-headers=Host:${link.match(/host=([^&#]+)/)?.[1] || ''}\n`;
+        const _p = decodeURIComponent(link.match(/[?&]path=([^&#]+)/)?.[1] || '/');
+        const _h = decodeURIComponent(link.match(/[?&]host=([^&#]+)/)?.[1] || '');
+        config += `${name} = vless, ${link.match(/@([^:]+):(\d+)/)?.[1] || ''}, ${link.match(/@[^:]+:(\d+)/)?.[1] || '443'}, username=${link.match(/vless:\/\/([^@]+)@/)?.[1] || ''}, tls=${link.includes('security=tls')}, ws=true, ws-path=${_p}, ws-headers=Host:${_h}\n`;
     });
     config += '\n[Proxy Group]\nPROXY = select, ' + links.map((_, i) => decodeURIComponent(links[i].split('#')[1] || `节点${i + 1}`)).join(', ') + '\n';
     config += '\n[Rule]\n';
